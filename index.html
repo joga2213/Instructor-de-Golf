@@ -396,7 +396,7 @@ async function askServer(history, image, onText, signal){
   catch(e) { if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"nosample"}; }
   if (r.status===404 || r.status===405) throw {code:"nosample"};
   if (r.status===429) throw {code:"rate_limited"};
-  if (!r.ok) throw {code:"server"};
+  if (!r.ok) { let m=""; try{ m=(await r.json()).error||""; }catch(e){} throw {code: r.status===503?"nokeyserver":"server", message:m}; }
   const j = await r.json(); const text = j.text || "";
   onText && onText(text); return text;
 }
@@ -411,7 +411,8 @@ function aiErrorCopy(e){
     case "not_granted": return "No se dio permiso para usar Claude. Puedes seguir con las lecciones sin IA.";
     case "rate_limited": return "Muchas preguntas seguidas. Espera un minuto y vuelve a intentar.";
     case "images_unavailable": return "Aquí no puedo ver fotos. Descríbeme lo que ves y te ayudo.";
-    case "server": return "El servidor del profesor tuvo un problema. Intenta de nuevo en un momento.";
+    case "server": return "El servidor del profesor tuvo un problema"+(e.message?": "+e.message:"")+". Intenta de nuevo en un momento.";
+    case "nokeyserver": return "Falta la clave de la IA en el servidor. En Vercel, agrega GEMINI_API_KEY en Settings, Environment Variables, y luego haz Redeploy.";
     case "cancelled": return "";
     default: return "No pude responder ahora. Intenta de nuevo en un momento.";
   }
