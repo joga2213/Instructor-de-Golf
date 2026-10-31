@@ -1,0 +1,709 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style></head><body>
+<title>Mi Profesor de Golf</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: una columna tranquila, letra grande; el avance es una tarjeta de puntuación de 8 hoyos. */
+:root{
+  --bg:#f3f6f1; --surface:#ffffff; --ink:#15281c; --muted:#4d6155; --line:#d3ddd4;
+  --green:#1d5b37; --green-2:#2f7a4c; --green-soft:#e1ede4; --flag:#f2c230; --flag-ink:#3a2c00;
+  --alert:#a3261b; --alert-soft:#fbe9e6; --onGreen:#ffffff;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px; --fs:18px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1712; --surface:#17231b; --ink:#e8f0ea; --muted:#a6b8ac; --line:#2b3b30;
+  --green:#5fbf84; --green-2:#7fd3a0; --green-soft:#1d3325; --flag:#f2c230; --flag-ink:#2a2000;
+  --alert:#ff8f80; --alert-soft:#3a1c18; --onGreen:#0c1a11; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1712; --surface:#17231b; --ink:#e8f0ea; --muted:#a6b8ac; --line:#2b3b30;
+  --green:#5fbf84; --green-2:#7fd3a0; --green-soft:#1d3325; --flag:#f2c230; --flag-ink:#2a2000;
+  --alert:#ff8f80; --alert-soft:#3a1c18; --onGreen:#0c1a11; color-scheme:dark}
+:root[data-size="lg"]{--fs:21px}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:var(--fs);line-height:1.55;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 120px}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.1;text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:2.2em} h2{font-size:1.75em} h3{font-size:1.3em}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:.8em;font-weight:600;color:var(--green)}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.35em}
+.brand svg{flex:none}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs button{background:none;border:0;color:var(--muted);font:600 .72em var(--body);padding:10px 2px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-height:64px}
+nav.tabs button svg{width:26px;height:26px}
+nav.tabs button[aria-current="page"]{color:var(--green)}
+nav.tabs button[aria-current="page"] svg{stroke-width:2.4}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.hero{background:var(--green);color:var(--onGreen);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:12px}
+.hero .eyebrow{color:var(--flag)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:12px 22px;border-radius:999px;border:2px solid transparent;font:700 1em var(--body);cursor:pointer;text-decoration:none}
+.btn-primary{background:var(--flag);color:var(--flag-ink)}
+.btn-green{background:var(--green);color:var(--onGreen)}
+.btn-ghost{background:transparent;color:var(--green);border-color:var(--green)}
+.btn-small{min-height:44px;padding:8px 16px;font-size:.9em}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--flag);outline-offset:2px}
+/* Scorecard */
+.score{overflow-x:auto}
+.score table{border-collapse:collapse;width:100%;min-width:520px;font-variant-numeric:tabular-nums}
+.score th,.score td{border:1px solid var(--line);padding:8px 6px;text-align:center}
+.score th{font-family:var(--display);font-weight:600;font-size:.85em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--green-soft)}
+.score td.lbl,.score th.lbl{text-align:left;padding-left:10px;white-space:nowrap}
+.dot{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);font-weight:700;font-size:.8em}
+.dot.done{background:var(--green);border-color:var(--green);color:var(--onGreen)}
+.dot.now{border-color:var(--flag);background:var(--flag);color:var(--flag-ink)}
+/* Lesson list */
+.holes{display:grid;gap:10px}
+.hole{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}
+.hole .n{font-family:var(--display);font-weight:700;font-size:1.6em;color:var(--green);text-align:center;line-height:1}
+.hole .n small{display:block;font-size:.42em;letter-spacing:.12em;color:var(--muted)}
+.hole .t{min-width:0}
+.hole .t b{display:block}
+.pill{font-size:.75em;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--green-soft);color:var(--green);white-space:nowrap}
+.pill.now{background:var(--flag);color:var(--flag-ink)}
+.pill.done{background:var(--green);color:var(--onGreen)}
+/* Lesson */
+.steps-nav{display:flex;gap:8px}
+.steps-nav span{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.steps-nav span.on{background:var(--green)}
+.step-big{font-size:1.15em}
+.term{border-bottom:2px dotted var(--green);cursor:help;background:none;border-top:0;border-left:0;border-right:0;color:inherit;font:inherit;padding:0}
+.gloss{background:var(--green-soft);border-radius:10px;padding:12px 14px}
+.tip{border-left:5px solid var(--flag);background:var(--surface);padding:12px 16px;border-radius:0 10px 10px 0}
+.alert{border:2px solid var(--alert);background:var(--alert-soft);color:var(--ink);border-radius:var(--r);padding:16px 18px}
+.alert b{color:var(--alert)}
+.counter{display:flex;align-items:center;gap:18px;justify-content:center}
+.counter output{font-family:var(--display);font-size:3em;font-weight:700;min-width:2.5ch;text-align:center;font-variant-numeric:tabular-nums}
+.round{width:64px;height:64px;border-radius:50%;border:2px solid var(--green);background:var(--surface);color:var(--green);font-size:1.6em;font-weight:700;cursor:pointer}
+/* Chat */
+.chat{display:flex;flex-direction:column;gap:12px;min-height:240px}
+.msg{max-width:88%;padding:12px 16px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.bot{background:var(--surface);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:6px}
+.msg.me{background:var(--green);color:var(--onGreen);align-self:flex-end;border-bottom-right-radius:6px}
+.msg.warn{background:var(--alert-soft);border:2px solid var(--alert)}
+.msg img{display:block;max-width:220px;border-radius:10px;margin-bottom:6px}
+.msg .say{margin-top:6px}
+.composer{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-top:8px;display:flex;flex-direction:column;gap:8px}
+.composer .row{flex-wrap:nowrap}
+textarea,input[type=text],input[type=password],input[type=number],select{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px 14px;min-height:52px}
+textarea{resize:vertical;min-height:56px}
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:700}
+label.f span.h{font-weight:400;color:var(--muted);font-size:.88em}
+.icon-btn{flex:none;width:56px;height:56px;border-radius:50%;border:2px solid var(--green);background:var(--surface);color:var(--green);display:grid;place-items:center;cursor:pointer}
+.icon-btn.on{background:var(--alert);border-color:var(--alert);color:#fff}
+.icon-btn svg{width:26px;height:26px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:10px 16px;font:inherit;font-size:.92em;cursor:pointer;min-height:48px}
+.chip[aria-pressed="true"]{border-color:var(--green);background:var(--green-soft);color:var(--green);font-weight:700}
+.result{background:var(--green);color:var(--onGreen);border-radius:var(--r);padding:20px}
+.result .club{font-family:var(--display);font-size:2.4em;font-weight:700;line-height:1}
+.seg{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;background:var(--surface)}
+.opt:has(input:checked){border-color:var(--green);background:var(--green-soft)}
+.opt input{width:22px;height:22px;margin-top:3px;accent-color:var(--green)}
+.status{font-size:.88em;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;z-index:30;font-weight:700;max-width:90vw;text-align:center}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (min-width:760px){
+  nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);bottom:auto;border:1px solid var(--line);border-radius:999px;max-width:760px;margin:0 auto 18px;padding:4px;grid-template-columns:repeat(5,1fr)}
+  nav.tabs button{flex-direction:row;justify-content:center;min-height:52px;font-size:.85em;border-radius:999px}
+  nav.tabs button[aria-current="page"]{background:var(--green-soft)}
+  .composer{bottom:0}
+  .wrap{padding-block:18px 40px}
+}
+@media (prefers-reduced-motion:no-preference){.view{animation:in .25s ease-out}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--green)"/><path d="M14 8v18" stroke="var(--onGreen)" stroke-width="2.2" stroke-linecap="round"/><path d="M14 8l9 3.5-9 3.5z" fill="var(--flag)"/><ellipse cx="17" cy="26.5" rx="7" ry="1.8" fill="none" stroke="var(--onGreen)" stroke-width="1.6"/></svg>
+      Mi Profesor de Golf
+    </div>
+    <button class="btn btn-ghost btn-small" id="sizeBtn" type="button" aria-pressed="false" title="Cambiar tamaño de letra">A<span style="font-size:1.3em">A</span></button>
+  </header>
+
+  <nav class="tabs" aria-label="Secciones">
+    <button type="button" data-go="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Inicio</button>
+    <button type="button" data-go="leccion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18"/><path d="M7 4l10 4-10 4"/><ellipse cx="12" cy="20" rx="7" ry="1.5"/></svg>Lección</button>
+    <button type="button" data-go="profesor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/></svg>Profesor</button>
+    <button type="button" data-go="palo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2l-6 17"/><path d="M9 19c-1 2-4 2.5-5 1.5S5 17 7 17.5z"/><circle cx="18" cy="19" r="2"/></svg>¿Qué palo?</button>
+    <button type="button" data-go="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
+  </nav>
+
+  <main id="app" aria-live="polite"></main>
+</div>
+<div id="toast" class="toast" hidden role="status"></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------------- Contenido ---------------- */
+const TERMS = {
+  "agarre":"La forma de tomar el palo con las manos.",
+  "palo":"La herramienta con la que se golpea la bola. Hay varios: putter, hierros, maderas, wedges.",
+  "postura":"La posición del cuerpo antes de golpear.",
+  "alineación":"Hacia dónde apuntan tus pies, caderas y hombros.",
+  "línea de objetivo":"Una línea imaginaria desde la bola hasta donde quieres que vaya.",
+  "putt":"Golpe suave en el green para meter la bola en el hoyo.",
+  "putter":"El palo plano que se usa en el green.",
+  "green":"El pasto muy corto alrededor del hoyo.",
+  "chip":"Golpe corto cerca del green: la bola vuela un poco y luego rueda.",
+  "hierro":"Palo de cabeza delgada y metálica. Tienen número: el 9 sube más, el 5 llega más lejos.",
+  "wedge":"Hierro muy abierto para golpes cortos y altos. El sand wedge sirve para la arena.",
+  "swing":"El movimiento completo del palo para golpear la bola.",
+  "medio swing":"Un swing pequeño: los brazos suben solo hasta la cintura.",
+  "tres cuartos":"Un swing que sube hasta el hombro, sin llegar arriba del todo. Cuida la espalda.",
+  "búnker":"Un hoyo con arena en el campo.",
+  "tee":"Pequeño soporte donde se pone la bola en el primer golpe de cada hoyo. También es la zona de salida.",
+  "par":"Los golpes que un buen jugador necesita en un hoyo. Tú no tienes que llegar a eso.",
+  "híbrido":"Palo fácil de usar, entre hierro y madera. Ayuda mucho a los principiantes.",
+  "rough":"El pasto más alto a los lados de la calle.",
+  "calle":"El pasto corto que va del tee al green."
+};
+
+const WARMUP = [
+  "Camina 2 minutos a paso tranquilo.",
+  "Haz 10 círculos suaves con los hombros, hacia atrás.",
+  "Abre y cierra las manos 10 veces. Gira las muñecas despacio.",
+  "Con el palo en las manos, delante del cuerpo, gira el tronco suave a cada lado. Sin forzar.",
+  "Haz 5 swings de práctica muy lentos, sin bola."
+];
+
+const LESSONS = [
+ {id:"agarre", title:"El agarre", goal:"Tomar el palo de forma firme pero suave.", terms:["agarre","palo"],
+  steps:[
+   {t:"Mano izquierda primero", d:"Si juegas con la derecha, pon el palo en los dedos de la mano izquierda, no en la palma. Cierra la mano. Al mirar hacia abajo, debes ver dos nudillos."},
+   {t:"Mano derecha debajo", d:"Pon la mano derecha justo debajo de la izquierda. El pulgar izquierdo queda cubierto por la palma derecha. La V que forman tu pulgar e índice apunta a tu hombro derecho."},
+   {t:"Presión suave", d:"Aprieta como si tuvieras un pajarito en las manos: un 4 de 10. Si te duelen las manos, pide en la tienda un grip más grueso. Ayuda mucho."}
+  ],
+  drill:{text:"Toma el palo, suéltalo y vuelve a tomarlo. Revisa los dos nudillos cada vez.", reps:10},
+  tip:"Si tienes artrosis en las manos, calienta los dedos con agua tibia antes de practicar."},
+ {id:"postura", title:"Postura y alineación", goal:"Pararte cómodo, estable y apuntando bien.", terms:["postura","alineación","línea de objetivo"],
+  steps:[
+   {t:"Pies separados", d:"Separa los pies al ancho de los hombros. Rodillas un poco flojas, no rectas ni muy dobladas."},
+   {t:"Inclínate desde la cadera", d:"Lleva la cola un poco hacia atrás y deja la espalda recta. Los brazos cuelgan relajados. No te encorves."},
+   {t:"Apunta con el cuerpo", d:"Pon un palo en el suelo apuntando al objetivo. Tus pies, caderas y hombros van paralelos a ese palo, como las vías de un tren."}
+  ],
+  drill:{text:"Toma tu postura frente a un espejo. Mantén 10 segundos, relájate y repite.", reps:5},
+  tip:"Si te molesta la espalda baja, inclínate un poco menos. La comodidad va primero."},
+ {id:"putt", title:"El putt", goal:"Rodar la bola en el green con un movimiento de péndulo.", terms:["putt","putter","green"],
+  steps:[
+   {t:"Ojos sobre la bola", d:"Ponte de modo que tus ojos queden justo encima de la bola. Usa el putter, el palo plano."},
+   {t:"Hombros como péndulo", d:"Mueve el palo con los hombros. Las muñecas quedan quietas. El triángulo de brazos y hombros no se rompe."},
+   {t:"Tic-tac", d:"El movimiento hacia atrás y hacia adelante dura lo mismo. Di \"tic\" al ir atrás y \"tac\" al golpear."}
+  ],
+  drill:{text:"Pon 10 bolas a 1 metro del hoyo. Cuenta cuántas entran.", reps:10},
+  tip:"El putt casi no exige al cuerpo. Es perfecto para practicar en casa sobre una alfombra."},
+ {id:"chip", title:"El chip", goal:"Un golpe corto que vuela poco y luego rueda hacia el hoyo.", terms:["chip","hierro"],
+  steps:[
+   {t:"Bola atrás", d:"Usa un hierro 8 o 9. Pon la bola un poco más cerca del pie de atrás. Pies más juntos que en el swing."},
+   {t:"Peso adelante", d:"Carga un poco más de peso en el pie que mira al objetivo. Mantenlo así todo el golpe."},
+   {t:"Como un putt grande", d:"Mueve hombros y brazos juntos, con muñecas firmes. La bola cae al inicio del green y rueda."}
+  ],
+  drill:{text:"Desde fuera del green, intenta que 10 bolas queden dentro de un círculo de 2 metros.", reps:10},
+  tip:"Golpes pequeños, sin fuerza. El palo hace el trabajo."},
+ {id:"medio", title:"El medio swing", goal:"Un swing pequeño y con buen ritmo.", terms:["medio swing","swing"],
+  steps:[
+   {t:"De la cintura a la cintura", d:"Con un hierro 7, sube los brazos solo hasta la cintura. Imagina un reloj: de las 9 a las 3."},
+   {t:"Gira el pecho, suave", d:"El pecho gira un poco hacia atrás y luego hacia el objetivo. Los brazos lo acompañan. No empujes con fuerza."},
+   {t:"Termina mirando al objetivo", d:"Al final, el pecho y la hebilla del cinturón miran hacia donde va la bola."}
+  ],
+  drill:{text:"Haz swings lentos contando \"uno\" al subir y \"dos\" al bajar.", reps:15},
+  tip:"El ritmo vale más que la fuerza. Un swing suave y limpio llega más lejos."},
+ {id:"completo", title:"El swing completo", goal:"Un swing de tres cuartos, cómodo para la espalda.", terms:["tres cuartos","swing"],
+  steps:[
+   {t:"Sube hasta el hombro", d:"Haz un swing de tres cuartos: las manos llegan a la altura del hombro. No hace falta subir más."},
+   {t:"Deja que el talón ayude", d:"Si te cuesta girar, levanta un poco el talón izquierdo al subir. Así la espalda no se fuerza."},
+   {t:"Termina en equilibrio", d:"Al final, quédate quieto 3 segundos, con el peso en el pie de adelante. Si no puedes, baja la velocidad."}
+  ],
+  drill:{text:"Haz swings con bola. Descansa 30 segundos cada 5 golpes.", reps:20},
+  tip:"Si sientes un tirón en la espalda o el hombro, para y vuelve al medio swing."},
+ {id:"bunker", title:"El búnker", goal:"Sacar la bola de la arena sin miedo.", terms:["búnker","wedge"],
+  steps:[
+   {t:"Pies firmes", d:"Entra por el lado más bajo. Mueve los pies en la arena para quedar firme. No toques la arena con el palo antes de golpear."},
+   {t:"Cara abierta", d:"Usa el sand wedge. Gira la cara del palo un poco hacia el cielo antes de tomarlo."},
+   {t:"Golpea la arena", d:"Apunta a la arena, unos 5 cm antes de la bola. La arena saca la bola. Sigue el movimiento hasta el final."}
+  ],
+  drill:{text:"Dibuja una línea en la arena. Golpea la arena justo en la línea, sin bola.", reps:10},
+  tip:"Al salir, rastrilla la arena. Es parte de la cortesía del golf."},
+ {id:"recorrido", title:"Tu primer recorrido", goal:"Jugar unos hoyos y disfrutar.", terms:["tee","par","calle"],
+  steps:[
+   {t:"Elige bien", d:"Empieza con 9 hoyos cortos o un campo \"pitch and putt\". Ve en un horario tranquilo, con un amigo."},
+   {t:"Cortesía", d:"Haz silencio cuando otro juega. Arregla las marcas en el green. Deja pasar a los grupos más rápidos."},
+   {t:"Tu meta", d:"No importa el par. Si llegas al doble del par en un hoyo, levanta la bola y sigue. Lleva agua y descansa."}
+  ],
+  drill:{text:"Juega 3 hoyos. Anota un momento bueno de cada uno.", reps:3},
+  tip:"Usa carrito si el campo es largo. Cuidar la energía también es jugar bien."}
+];
+
+const SAFETY_RE = /(dolor (en el |del |de )?pecho|pecho me duele|me duele el pecho|mare[oa]|me mareo|falta de aire|me falta el aire|no puedo respirar|me ahogo|dolor agudo|dolor fuerte|dolor punzante|palpitaciones)/i;
+const SAFETY_MSG = "Para ahora mismo y descansa.\nLo que describes necesita atención. Consulta a un médico antes de seguir practicando.\nSi el dolor es fuerte o no pasa, llama a emergencias.";
+
+/* ---------------- Estado ---------------- */
+const KEY = "miProfesorGolf.v1";
+const defaults = {name:"", limits:"", hand:"derecha", current:0, step:0, done:[], practice:{}, warmupDate:"",
+  ai:"claude", apiKey:"", model:"claude-opus-5-5", voiceOn:true, autoRead:false, rate:0.9, voiceName:"", size:"md", chat:[]};
+let S = {...defaults};
+try { const raw = localStorage.getItem(KEY); if (raw) S = {...defaults, ...JSON.parse(raw)}; } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+document.documentElement.dataset.size = S.size;
+const sizeBtn = document.getElementById("sizeBtn");
+sizeBtn.setAttribute("aria-pressed", S.size==="lg");
+sizeBtn.onclick = () => { S.size = S.size==="lg"?"md":"lg"; document.documentElement.dataset.size=S.size; sizeBtn.setAttribute("aria-pressed", S.size==="lg"); save(); };
+
+/* ---------------- Utilidades ---------------- */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const app = document.getElementById("app");
+function toast(t){ const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,2600); }
+const today = () => new Date().toISOString().slice(0,10);
+const ICON = {
+  speak:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>',
+  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>',
+  cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>',
+  send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>'
+};
+
+/* ---------------- Voz ---------------- */
+const synth = window.speechSynthesis || null;
+function esVoices(){ return synth ? synth.getVoices().filter(v => /^es/i.test(v.lang)) : []; }
+function speak(text){
+  if (!synth || !S.voiceOn) { if(!synth) toast("Tu navegador no puede leer en voz alta."); return; }
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/[*#_]/g,""));
+  u.lang = "es-ES"; u.rate = S.rate;
+  const v = esVoices().find(v => v.name===S.voiceName) || esVoices()[0];
+  if (v) { u.voice = v; u.lang = v.lang; }
+  synth.speak(u);
+}
+function speakBtn(text, label="Escuchar"){ return `<button type="button" class="btn btn-ghost btn-small say" data-say="${esc(text)}">${ICON.speak}${label}</button>`; }
+document.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if (b) speak(b.dataset.say); });
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let rec = null;
+function dictate(target, btn){
+  if (!SR) { toast("El dictado no está disponible aquí. Prueba Chrome en tu computadora o usa el micrófono del teclado."); return; }
+  if (rec) { rec.stop(); return; }
+  try {
+    rec = new SR(); rec.lang = "es-ES"; rec.interimResults = true; rec.continuous = false;
+    const base = target.value ? target.value.trim()+" " : "";
+    rec.onresult = ev => { let t=""; for (const r of ev.results) t += r[0].transcript; target.value = base + t; };
+    rec.onerror = ev => { toast(ev.error==="not-allowed" ? "No hay permiso para usar el micrófono aquí. Usa el micrófono del teclado." : "No pude escuchar. Intenta de nuevo."); };
+    rec.onend = () => { rec=null; btn.classList.remove("on"); btn.setAttribute("aria-pressed","false"); };
+    rec.start(); btn.classList.add("on"); btn.setAttribute("aria-pressed","true"); toast("Te escucho…");
+  } catch(e) { rec=null; toast("No pude activar el micrófono."); }
+}
+
+/* ---------------- IA ---------------- */
+let samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample").catch(()=>null) : Promise.resolve(null);
+
+function teacherRules(){
+  const L = LESSONS[S.current];
+  return `Eres un profesor de golf personal, paciente y alentador. Tu alumno${S.name?" se llama "+S.name+",":""} tiene 70 años y aprende desde cero. Juega con la mano ${S.hand}.${S.limits?" Limitaciones físicas: "+S.limits+".":""}
+Va en la lección ${S.current+1} de 8: "${L.title}". Orden de lecciones: agarre, postura y alineación, putt, chip, medio swing, swing completo, búnker, primer recorrido.
+Reglas:
+- Habla en español, frases cortas, palabras simples. Explica cada término de golf la primera vez.
+- Una cosa a la vez. Máximo 3 pasos por respuesta, numerados. Termina preguntando si quiere seguir o practicar.
+- Adapta todo a su edad: ritmo antes que fuerza, swings de tres cuartos, nada que fuerce espalda u hombros. Recuerda calentar.
+- Si envía una foto de su postura, agarre o swing: primero di UNA cosa que hace bien, luego SOLO UNA corrección, la más importante.
+- Si pregunta qué palo usar y no dio la distancia y el lugar (calle, rough, arena, green), pregúntalos. Luego recomienda uno, con una razón breve.
+- Si menciona dolor en el pecho, mareo, falta de aire o dolor agudo, dile que pare y consulte a un médico antes de seguir.
+- De vez en cuando, recuerda que unas clases presenciales con el profesor del club complementan muy bien esta práctica.
+- No uses markdown con asteriscos ni almohadillas. Texto simple. Respuestas de menos de 120 palabras.`;
+}
+
+async function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
+
+async function askAI(history, image, onText, signal){
+  if (S.ai === "off") throw {code:"off"};
+  if (S.ai === "apikey") {
+    if (!S.apiKey) throw {code:"nokey"};
+    const msgs = history.map(m => ({role:m.role, content:m.content}));
+    if (image) {
+      const last = msgs[msgs.length-1];
+      last.content = [{type:"image", source:{type:"base64", media_type:image.type||"image/jpeg", data: await blobToB64(image)}}, {type:"text", text:last.content}];
+    }
+    let r;
+    try {
+      r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", signal,
+        headers:{"content-type":"application/json","x-api-key":S.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body: JSON.stringify({model:S.model||"claude-opus-5-5", max_tokens:700, system:teacherRules(), messages:msgs})});
+    } catch(e) { throw {code:"blocked"}; }
+    if (!r.ok) { let m=""; try{ m=(await r.json()).error?.message||""; }catch(e){} throw {code:"http", message:m||("Error "+r.status)}; }
+    const j = await r.json();
+    const text = (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+    onText && onText(text); return text;
+  }
+  const sample = await samplePromise;
+  if (!sample) return askServer(history, image, onText, signal);
+  const turns = [{role:"user", content:teacherRules()+"\n\nResponde siempre siguiendo estas reglas."}, {role:"assistant", content:"Entendido. Seré tu profesor."}, ...history];
+  const opts = {cache:false, signal, onText: ({text}) => onText && onText(text)};
+  if (image) opts.images = [image];
+  const {text} = await sample(turns, opts);
+  return text;
+}
+/* Fuera de Claude: usa el servidor de la web (/api/chat), que guarda la clave de forma segura. */
+async function askServer(history, image, onText, signal){
+  const L = LESSONS[S.current];
+  const profile = `Alumno: ${S.name||"sin nombre"}. Mano: ${S.hand}. Limitaciones: ${S.limits||"ninguna indicada"}. Lección actual: ${S.current+1} de 8, "${L.title}".`;
+  const body = {profile, messages: history.map(m => ({role:m.role, content:m.content}))};
+  if (image) body.image = {type: image.type || "image/jpeg", data: await blobToB64(image)};
+  let r;
+  try { r = await fetch("/api/chat", {method:"POST", signal, headers:{"content-type":"application/json"}, body: JSON.stringify(body)}); }
+  catch(e) { if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"nosample"}; }
+  if (r.status===404 || r.status===405) throw {code:"nosample"};
+  if (r.status===429) throw {code:"rate_limited"};
+  if (!r.ok) throw {code:"server"};
+  const j = await r.json(); const text = j.text || "";
+  onText && onText(text); return text;
+}
+function aiErrorCopy(e){
+  switch(e && e.code){
+    case "off": return "La IA está apagada. Puedes activarla en Ajustes.";
+    case "nokey": return "Falta tu clave de API. Ponla en Ajustes, o elige \"Claude integrado\".";
+    case "blocked": return "No pude conectar con la API desde aquí. La clave propia funciona al abrir la app como archivo en tu computadora. Dentro de Claude, usa \"Claude integrado\".";
+    case "http": return "La API respondió con un error: "+(e.message||"")+". Revisa tu clave en Ajustes.";
+    case "nosample": return "El profesor con IA no está disponible en esta vista. Prueba abrir la app dentro de Claude, o usa tu clave en Ajustes.";
+    case "not_granted": return "No se dio permiso para usar Claude. Puedes seguir con las lecciones sin IA.";
+    case "rate_limited": return "Muchas preguntas seguidas. Espera un minuto y vuelve a intentar.";
+    case "images_unavailable": return "Aquí no puedo ver fotos. Descríbeme lo que ves y te ayudo.";
+    case "server": return "El servidor del profesor tuvo un problema. Intenta de nuevo en un momento.";
+    case "cancelled": return "";
+    default: return "No pude responder ahora. Intenta de nuevo en un momento.";
+  }
+}
+
+/* ---------------- Vistas ---------------- */
+let view = "inicio";
+function go(v){ view=v; if (synth) synth.cancel(); render(); window.scrollTo({top:0}); }
+document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
+
+function render(){
+  document.querySelectorAll("[data-go]").forEach(b => b.toggleAttribute("aria-current", false) || (b.dataset.go===view && b.setAttribute("aria-current","page")));
+  ({inicio:vInicio, leccion:vLeccion, profesor:vProfesor, palo:vPalo, ajustes:vAjustes, calentar:vCalentar})[view]();
+}
+
+function status(i){ return S.done.includes(i) ? "done" : (i===S.current ? "now" : "next"); }
+
+function vInicio(){
+  const L = LESSONS[S.current]; const allDone = S.done.length===LESSONS.length;
+  const warm = S.warmupDate===today();
+  app.innerHTML = `<section class="view stack">
+    <div class="hero">
+      <span class="eyebrow">${allDone?"¡Completaste las 8 lecciones!":"Hoyo "+(S.current+1)+" de 8"}</span>
+      <h1>${S.name?"Hola, "+esc(S.name)+".":"Hola."} ${allDone?"Ahora, a jugar.":"Hoy toca: "+esc(L.title.toLowerCase())+"."}</h1>
+      <p>${esc(L.goal)}</p>
+      <div class="row">
+        <button class="btn btn-primary" type="button" id="cont">${S.step>0||S.done.length?"Seguir la lección":"Empezar la lección"}</button>
+        ${speakBtn((S.name?"Hola "+S.name+". ":"Hola. ")+"Hoy toca "+L.title+". "+L.goal, "Escuchar")}
+      </div>
+    </div>
+
+    ${warm?`<div class="tip"><b>Calentamiento hecho hoy.</b> Muy bien. Ya puedes practicar.</div>`:
+    `<div class="alert" style="border-color:var(--flag);background:var(--surface)"><b style="color:var(--ink)">Antes de practicar: 5 minutos de calentamiento.</b><p class="muted">Protege tu espalda, hombros y manos.</p><div class="row" style="margin-top:10px"><button class="btn btn-green btn-small" type="button" id="warm">Calentar ahora</button></div></div>`}
+
+    ${!S.name?`<div class="card stack"><h3>Cuéntame de ti</h3><p class="muted">Así adapto las lecciones. Todo se guarda solo en este dispositivo.</p>
+      <label class="f">Tu nombre<input id="nm" type="text" autocomplete="given-name" placeholder="Por ejemplo: Jorge"></label>
+      <label class="f">¿Alguna molestia física? <span class="h">Opcional. Ej.: artrosis en las manos, dolor lumbar, prótesis de cadera.</span><input id="lim" type="text" placeholder="Escribe aquí o deja vacío"></label>
+      <label class="f">¿Con qué mano juegas?<select id="hand"><option value="derecha">Derecha (lo más común)</option><option value="izquierda">Izquierda</option></select></label>
+      <div><button class="btn btn-green" type="button" id="saveMe">Guardar</button></div></div>`:""}
+
+    <div class="card stack">
+      <div class="row" style="justify-content:space-between"><h3>Tu tarjeta</h3><span class="muted">${S.done.length} de 8 lecciones</span></div>
+      <div class="score"><table>
+        <thead><tr><th class="lbl">Hoyo</th>${LESSONS.map((_,i)=>`<th>${i+1}</th>`).join("")}</tr></thead>
+        <tbody>
+          <tr><td class="lbl">Lección</td>${LESSONS.map((l,i)=>`<td><span class="dot ${status(i)==="next"?"":status(i)}" title="${esc(l.title)}">${status(i)==="done"?"✓":i+1}</span></td>`).join("")}</tr>
+          <tr><td class="lbl">Prácticas</td>${LESSONS.map((l,i)=>`<td>${S.practice[l.id]||"–"}</td>`).join("")}</tr>
+        </tbody></table></div>
+    </div>
+
+    <div class="stack"><h3>Las 8 lecciones</h3><div class="holes">
+      ${LESSONS.map((l,i)=>{ const st=status(i); return `<button type="button" class="hole" data-lesson="${i}">
+        <span class="n">${i+1}<small>HOYO</small></span><span class="t"><b>${esc(l.title)}</b><span class="muted">${esc(l.goal)}</span></span>
+        <span class="pill ${st}">${st==="done"?"Hecha":st==="now"?"Ahora":"Luego"}</span></button>`; }).join("")}
+    </div></div>
+
+    <div class="tip">Unas clases presenciales con el profesor de tu club complementan muy bien lo que practicas aquí. Él puede verte en persona y ajustar detalles.</div>
+  </section>`;
+  $("#cont").onclick = () => go("leccion");
+  const w=$("#warm"); if (w) w.onclick = () => go("calentar");
+  app.querySelectorAll("[data-lesson]").forEach(b => b.onclick = () => { const i=+b.dataset.lesson; if (i!==S.current){ S.current=i; S.step=0; save(); } go("leccion"); });
+  const sm=$("#saveMe"); if (sm) sm.onclick = () => { S.name=$("#nm").value.trim(); S.limits=$("#lim").value.trim(); S.hand=$("#hand").value; save(); toast(S.name?"Gracias, "+S.name+".":"Guardado."); render(); };
+}
+
+function vCalentar(){
+  let i = 0;
+  const draw = () => {
+    app.innerHTML = `<section class="view stack">
+      <span class="eyebrow">Calentamiento · paso ${i+1} de ${WARMUP.length}</span>
+      <div class="steps-nav">${WARMUP.map((_,k)=>`<span class="${k<=i?"on":""}"></span>`).join("")}</div>
+      <div class="card stack"><p class="step-big">${esc(WARMUP[i])}</p>${speakBtn(WARMUP[i])}</div>
+      <p class="muted">Muévete despacio. Nunca hasta sentir dolor.</p>
+      <div class="row">
+        ${i>0?`<button class="btn btn-ghost" type="button" id="prev">Atrás</button>`:""}
+        <button class="btn btn-green" type="button" id="next">${i<WARMUP.length-1?"Listo, siguiente":"Terminé de calentar"}</button>
+      </div></section>`;
+    if (S.autoRead) speak(WARMUP[i]);
+    const p=$("#prev"); if(p) p.onclick=()=>{i--;draw();};
+    $("#next").onclick=()=>{ if(i<WARMUP.length-1){i++;draw();} else { S.warmupDate=today(); save(); toast("¡Bien hecho! Cuerpo listo."); go("leccion"); } };
+  };
+  draw();
+}
+
+function linkTerms(text, terms){
+  let out = esc(text);
+  terms.forEach(t => { const re = new RegExp("(^|[^\\wáéíóúñ])("+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")(?![\\wáéíóúñ])","i");
+    out = out.replace(re, (m,a,b)=>`${a}<button type="button" class="term" data-term="${esc(t)}">${b}</button>`); });
+  return out;
+}
+
+function vLeccion(){
+  const L = LESSONS[S.current]; const n = L.steps.length;
+  const onPractice = S.step >= n;
+  const allTerms = Object.keys(TERMS);
+  if (!onPractice) {
+    const st = L.steps[S.step];
+    app.innerHTML = `<section class="view stack">
+      <div><span class="eyebrow">Hoyo ${S.current+1} · ${esc(L.title)} · Paso ${S.step+1} de ${n}</span></div>
+      <div class="steps-nav" aria-hidden="true">${[...Array(n+1)].map((_,k)=>`<span class="${k<=S.step?"on":""}"></span>`).join("")}</div>
+      ${S.warmupDate!==today()?`<div class="tip">¿Ya calentaste hoy? <button type="button" class="btn btn-ghost btn-small" id="warm" style="margin-left:6px">Calentar 5 min</button></div>`:""}
+      <div class="card stack">
+        <h2>${esc(st.t)}</h2>
+        <p class="step-big">${linkTerms(st.d, allTerms)}</p>
+        <div id="gloss"></div>
+        <div class="row">${speakBtn(st.t+". "+st.d)}</div>
+      </div>
+      ${S.step===n-1?`<div class="tip">${esc(L.tip)}</div>`:""}
+      <div class="row">
+        ${S.step>0?`<button class="btn btn-ghost" type="button" id="prev">Atrás</button>`:""}
+        <button class="btn btn-green" type="button" id="next">${S.step<n-1?"Entendido, siguiente":"Ir a practicar"}</button>
+        <button class="btn btn-ghost" type="button" id="ask">Preguntar al profesor</button>
+      </div>
+    </section>`;
+    if (S.autoRead) speak(st.t+". "+st.d);
+    app.querySelectorAll("[data-term]").forEach(b => b.onclick = () => { $("#gloss").innerHTML = `<div class="gloss"><b>${esc(b.dataset.term[0].toUpperCase()+b.dataset.term.slice(1))}:</b> ${esc(TERMS[b.dataset.term])}</div>`; });
+    const p=$("#prev"); if(p) p.onclick=()=>{S.step--;save();render();};
+    $("#next").onclick=()=>{S.step++;save();render();window.scrollTo({top:0});};
+    const w=$("#warm"); if(w) w.onclick=()=>go("calentar");
+    $("#ask").onclick=()=>{ pendingQuestion = `Estoy en la lección "${L.title}", paso "${st.t}". Tengo una duda: `; go("profesor"); };
+    return;
+  }
+  let count = 0;
+  app.innerHTML = `<section class="view stack">
+    <span class="eyebrow">Hoyo ${S.current+1} · ${esc(L.title)} · A practicar</span>
+    <div class="steps-nav" aria-hidden="true">${[...Array(n+1)].map(()=>`<span class="on"></span>`).join("")}</div>
+    <div class="card stack">
+      <h2>Ejercicio</h2>
+      <p class="step-big">${esc(L.drill.text)}</p>
+      <p class="muted">Meta: ${L.drill.reps} repeticiones. Descansa cuando lo necesites.</p>
+      <div class="counter"><button class="round" type="button" id="minus" aria-label="Restar una">−</button><output id="cnt" aria-live="polite">0</output><button class="round" type="button" id="plus" aria-label="Sumar una">+</button></div>
+      <div class="row">${speakBtn("Ejercicio. "+L.drill.text)}</div>
+    </div>
+    <div class="row">
+      <button class="btn btn-ghost" type="button" id="prev">Repasar pasos</button>
+      <button class="btn btn-primary" type="button" id="finish">Terminé esta lección</button>
+    </div>
+    <p class="muted">¿Quieres que el profesor vea tu ${L.id==="agarre"?"agarre":"postura"}? Ve a <b>Profesor</b> y envía una foto.</p>
+  </section>`;
+  const upd=()=>{$("#cnt").value=count; $("#cnt").textContent=count;};
+  $("#plus").onclick=()=>{count++;upd(); if(count===L.drill.reps) toast("¡Meta cumplida! Muy bien.");};
+  $("#minus").onclick=()=>{count=Math.max(0,count-1);upd();};
+  $("#prev").onclick=()=>{S.step=0;save();render();};
+  $("#finish").onclick=()=>{
+    S.practice[L.id]=(S.practice[L.id]||0)+1;
+    if(!S.done.includes(S.current)) S.done.push(S.current);
+    const nextIdx = LESSONS.findIndex((_,i)=>!S.done.includes(i));
+    if (nextIdx>=0) { S.current=nextIdx; S.step=0; }
+    save(); toast(nextIdx>=0?"¡Lección terminada! Sigue: "+LESSONS[nextIdx].title:"¡Terminaste todo el curso!"); go("inicio");
+  };
+}
+
+let pendingQuestion = "";
+let photo = null; let ctl = null;
+function vProfesor(){
+  const modeLabel = S.ai==="claude"?"Claude integrado":S.ai==="apikey"?"Tu clave de API":"IA apagada";
+  if (!S.chat.length) S.chat.push({role:"assistant", content:`Hola${S.name?" "+S.name:""}. Soy tu profesor. Vamos por la lección ${S.current+1}: ${LESSONS[S.current].title.toLowerCase()}.\nPuedes preguntarme lo que quieras, o mandarme una foto de tu postura o tu agarre.\n¿Empezamos?`});
+  app.innerHTML = `<section class="view stack">
+    <div class="row" style="justify-content:space-between"><h2>Tu profesor</h2><span class="status">${esc(modeLabel)} · <button type="button" class="term" id="toSet">cambiar</button></span></div>
+    <div class="chips" aria-label="Preguntas rápidas">
+      <button type="button" class="chip" data-q="Explícame la lección de hoy, paso a paso.">La lección de hoy</button>
+      <button type="button" class="chip" data-q="¿Qué palo uso?">¿Qué palo uso?</button>
+      <button type="button" class="chip" data-q="Dame un ejercicio corto para practicar en casa.">Ejercicio en casa</button>
+      <button type="button" class="chip" data-q="¿Cómo caliento antes de jugar?">Calentamiento</button>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div class="composer">
+      <div id="photoPrev"></div>
+      <div class="row">
+        <label class="icon-btn" title="Enviar una foto" for="ph">${ICON.cam}<span class="sr">Enviar una foto</span></label>
+        <input id="ph" type="file" accept="image/*" capture="environment" hidden>
+        <textarea id="q" rows="1" placeholder="Escribe tu pregunta…" aria-label="Tu pregunta"></textarea>
+        <button class="icon-btn" type="button" id="mic" aria-pressed="false" title="Dictar con la voz">${ICON.mic}<span class="sr">Dictar</span></button>
+        <button class="icon-btn" type="button" id="send" title="Enviar" style="background:var(--green);color:var(--onGreen)">${ICON.send}<span class="sr">Enviar</span></button>
+      </div>
+      <div class="row" style="justify-content:space-between"><button type="button" class="btn btn-ghost btn-small" id="clear">Nueva conversación</button><button type="button" class="btn btn-ghost btn-small" id="stop" hidden>Detener</button></div>
+    </div>
+  </section>`;
+  const chat=$("#chat"), q=$("#q");
+  const drawMsgs=()=>{ chat.innerHTML = S.chat.map(m=>`<div class="msg ${m.role==="user"?"me":"bot"} ${m.warn?"warn":""}">${m.img?`<img src="${m.img}" alt="Tu foto">`:""}${esc(m.content)}${m.role==="assistant"&&m.content?`<div>${speakBtn(m.content)}</div>`:""}</div>`).join(""); };
+  drawMsgs();
+  if (pendingQuestion){ q.value=pendingQuestion; pendingQuestion=""; q.focus(); }
+  $("#toSet").onclick=()=>go("ajustes");
+  $("#clear").onclick=()=>{ S.chat=[]; save(); render(); };
+  $("#mic").onclick=e=>dictate(q, e.currentTarget);
+  $("#ph").onchange=e=>{ const f=e.target.files[0]; if(!f) return; photo=f; const url=URL.createObjectURL(f);
+    $("#photoPrev").innerHTML=`<div class="row"><img src="${url}" alt="Foto elegida" style="max-height:90px;border-radius:10px"><span class="muted">Foto lista. Dime qué es: agarre, postura o swing.</span><button type="button" class="btn btn-ghost btn-small" id="rmPh">Quitar</button></div>`;
+    if(!q.value) q.value="Mira mi foto. ¿Qué hago bien y qué corrijo?";
+    $("#rmPh").onclick=()=>{photo=null;$("#photoPrev").innerHTML="";$("#ph").value="";}; };
+  app.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{ q.value=b.dataset.q; send(); });
+  q.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} });
+  $("#send").onclick=send;
+  $("#stop").onclick=()=>ctl&&ctl.abort();
+
+  async function send(){
+    const text=q.value.trim(); if(!text && !photo) return;
+    let imgThumb="";
+    if (photo) { try { imgThumb = await thumb(photo); } catch(e){} }
+    S.chat.push({role:"user", content:text||"Mira mi foto.", img:imgThumb||undefined});
+    q.value="";
+    if (SAFETY_RE.test(text)) { S.chat.push({role:"assistant", content:SAFETY_MSG, warn:true}); save(); drawMsgs(); speak(SAFETY_MSG); photo=null; $("#photoPrev").innerHTML=""; return; }
+    const bot={role:"assistant", content:"Pensando…"}; S.chat.push(bot); drawMsgs(); scrollEnd();
+    const history = S.chat.slice(0,-1).filter(m=>!m.warn).slice(-12).map(m=>({role:m.role, content:m.content}));
+    while (history.length && history[0].role!=="user") history.shift();
+    const img=photo; photo=null; $("#photoPrev").innerHTML=""; $("#ph").value="";
+    ctl=new AbortController(); $("#stop").hidden=false; $("#send").disabled=true;
+    const bubble = chat.lastElementChild;
+    try {
+      const out = await askAI(history, img, t=>{ bot.content=t; bubble.textContent=t; scrollEnd(); }, ctl.signal);
+      bot.content = out.trim();
+      if (S.autoRead) speak(bot.content);
+    } catch(e) {
+      const copy = aiErrorCopy(e);
+      bot.content = (e && e.text) ? e.text : (copy || "Detenido.");
+      if (!(e && e.text)) bot.warn = false;
+      if (e && (e.code==="off"||e.code==="nosample"||e.code==="not_granted")) bot.content = copy + "\n\nMientras tanto: " + offlineAnswer(text);
+    } finally { ctl=null; save(); drawMsgs(); scrollEnd(); const s=$("#stop"); if(s) s.hidden=true; const sb=$("#send"); if(sb) sb.disabled=false; }
+  }
+  function scrollEnd(){ const c=$(".composer"); c && c.scrollIntoView({block:"end"}); }
+}
+function offlineAnswer(text){
+  if (/palo/i.test(text)) return "usa la sección \"¿Qué palo?\". Te pregunto la distancia y el lugar, y te recomiendo uno.";
+  if (/calent/i.test(text)) return WARMUP.map((w,i)=>(i+1)+". "+w).slice(0,3).join("\n")+"\nSigue con el resto en la sección de calentamiento.";
+  const L=LESSONS[S.current]; return "tu lección de hoy es "+L.title.toLowerCase()+".\n"+L.steps.map((s,i)=>(i+1)+". "+s.t+": "+s.d).join("\n")+"\n¿Quieres seguir o practicar?";
+}
+async function thumb(file){
+  const bmp = await createImageBitmap(file); const s = Math.min(1, 360/Math.max(bmp.width,bmp.height));
+  const c=document.createElement("canvas"); c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s);
+  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height); return c.toDataURL("image/jpeg",.7);
+}
+
+/* ---------------- ¿Qué palo? ---------------- */
+const LIES = [["calle","Calle","pasto corto"],["rough","Rough","pasto alto"],["arena","Arena","búnker"],["green","Green","cerca del hoyo"],["tee","Tee","primer golpe"]];
+function recommend(dist, lie){
+  if (lie==="green") return {club:"Putter", why:"En el green la bola debe rodar. El putter es el palo para eso."};
+  if (lie==="arena") return dist<=40 ? {club:"Sand wedge", why:"Su forma se desliza por la arena y saca la bola hacia arriba."}
+    : {club:"Hierro 9", why:"Desde un búnker lejos del green, el hierro 9 saca la bola limpia y sube rápido. Golpea la bola primero."};
+  if (dist<=25) return {club:"Hierro 8 (chip)", why:"Cerca del green, un chip con hierro 8 vuela poco y rueda. Es el golpe más seguro."};
+  if (dist<=45) return {club:"Sand wedge", why:"Para distancias cortas sube alto y cae suave. Usa un medio swing."};
+  if (dist<=65) return {club: lie==="rough"?"Pitching wedge":"Pitching wedge", why:"Para esta distancia, con un swing de tres cuartos y buen ritmo."};
+  if (dist<=80) return {club:"Hierro 9", why:"Sube fácil y es preciso. Swing de tres cuartos, sin forzar."};
+  if (dist<=95) return {club:"Hierro 7", why:"Es un palo versátil y cómodo. Swing suave, de tres cuartos."};
+  if (lie==="rough") return {club:"Híbrido", why:"En el pasto alto, el híbrido se desliza mejor que un hierro largo y es más fácil."};
+  if (dist<=125) return {club:"Híbrido", why:"Es más fácil de pegar que los hierros largos. Ideal para principiantes."};
+  if (lie==="tee") return {club:"Madera 3 o driver", why:"Desde el tee, con la bola en el soporte, llegas más lejos. Si te cuesta, usa el híbrido."};
+  return {club:"Híbrido", why:"Desde la calle a esa distancia, el híbrido es más seguro que una madera. Mejor un golpe bueno que uno largo."};
+}
+function vPalo(){
+  let lie = "calle";
+  app.innerHTML = `<section class="view stack">
+    <h2>¿Qué palo uso?</h2>
+    <p class="muted">Dime dos cosas y te recomiendo uno.</p>
+    <div class="card stack">
+      <label class="f">1. ¿A cuántos metros está el objetivo?<span class="h">Los yardajes del campo suelen estar en postes o en la tarjeta.</span><input id="dist" type="number" inputmode="numeric" min="1" max="250" value="90"></label>
+      <div class="stack" style="gap:8px"><b>2. ¿Dónde está la bola?</b>
+        <div class="chips" id="lies">${LIES.map(([k,l,h])=>`<button type="button" class="chip" data-lie="${k}" aria-pressed="${k===lie}">${l} <span class="muted">· ${h}</span></button>`).join("")}</div>
+      </div>
+    </div>
+    <div class="result stack" id="res"></div>
+    <p class="muted">Distancias pensadas para un swing suave de tres cuartos. Con el tiempo, anota cuánto llegas con cada palo y ajústalo.</p>
+  </section>`;
+  const draw=()=>{ const d=+$("#dist").value||0; const r=recommend(d, lie);
+    $("#res").innerHTML=`<span class="eyebrow" style="color:var(--flag)">Te recomiendo</span><div class="club">${esc(r.club)}</div><p>${esc(r.why)}</p><div>${speakBtn("Te recomiendo "+r.club+". "+r.why).replace("btn-ghost","btn-primary")}</div>`; };
+  $("#dist").oninput=draw;
+  app.querySelectorAll("[data-lie]").forEach(b=>b.onclick=()=>{ lie=b.dataset.lie; app.querySelectorAll("[data-lie]").forEach(x=>x.setAttribute("aria-pressed", x===b)); draw(); });
+  draw();
+}
+
+/* ---------------- Ajustes ---------------- */
+function vAjustes(){
+  const voices = esVoices();
+  app.innerHTML = `<section class="view stack">
+    <h2>Ajustes</h2>
+    <div class="card stack">
+      <h3>Profesor con inteligencia artificial</h3>
+      <div class="seg" role="radiogroup">
+        <label class="opt"><input type="radio" name="ai" value="claude" ${S.ai==="claude"?"checked":""}><span><b>Claude integrado</b><br><span class="muted">No necesitas clave. Dentro de Claude usa tu cuenta; en la web usa el servidor de la app. Puede ver tus fotos.</span></span></label>
+        <label class="opt"><input type="radio" name="ai" value="apikey" ${S.ai==="apikey"?"checked":""}><span><b>Mi clave de API de Anthropic</b><br><span class="muted">Para usar la app como archivo en tu computadora o en tu propio sitio.</span></span></label>
+        <label class="opt"><input type="radio" name="ai" value="off" ${S.ai==="off"?"checked":""}><span><b>Sin IA</b><br><span class="muted">Solo lecciones guiadas. No envía nada a internet.</span></span></label>
+      </div>
+      <div id="keyBox" class="stack" ${S.ai==="apikey"?"":"hidden"}>
+        <label class="f">Clave de API<span class="h">Empieza con "sk-ant-". Se guarda solo en este dispositivo.</span><input id="key" type="password" autocomplete="off" value="${esc(S.apiKey)}" placeholder="sk-ant-..."></label>
+        <label class="f">Modelo<input id="model" type="text" value="${esc(S.model)}"></label>
+        <p class="status">Consíguela en console.anthropic.com. No compartas tu clave con nadie.</p>
+      </div>
+    </div>
+    <div class="card stack">
+      <h3>Voz</h3>
+      <label class="opt"><input type="checkbox" id="voiceOn" ${S.voiceOn?"checked":""}><span><b>Botones de "Escuchar"</b><br><span class="muted">Lee en voz alta los pasos y respuestas.</span></span></label>
+      <label class="opt"><input type="checkbox" id="autoRead" ${S.autoRead?"checked":""}><span><b>Leer todo automáticamente</b><br><span class="muted">Cada paso y cada respuesta se lee sola.</span></span></label>
+      <label class="f">Velocidad de lectura<input id="rate" type="range" min="0.6" max="1.2" step="0.05" value="${S.rate}"></label>
+      ${voices.length?`<label class="f">Voz<select id="voice">${voices.map(v=>`<option ${v.name===S.voiceName?"selected":""}>${esc(v.name)}</option>`).join("")}</select></label>`:`<p class="status">${synth?"Las voces en español se cargan al abrir esta página por primera vez.":"Este navegador no puede leer en voz alta."}</p>`}
+      <div><button type="button" class="btn btn-ghost btn-small" data-say="Hola. Soy tu profesor de golf. Vamos con calma.">${ICON.speak}Probar voz</button></div>
+      <p class="status">Dictado por voz: ${SR?"disponible en este navegador.":"no disponible aquí. Usa el micrófono del teclado de tu teléfono."}</p>
+    </div>
+    <div class="card stack">
+      <h3>Mis datos</h3>
+      <label class="f">Nombre<input id="nm2" type="text" value="${esc(S.name)}"></label>
+      <label class="f">Molestias físicas<input id="lim2" type="text" value="${esc(S.limits)}" placeholder="Ej.: dolor lumbar"></label>
+      <label class="f">Mano<select id="hand2"><option value="derecha" ${S.hand==="derecha"?"selected":""}>Derecha</option><option value="izquierda" ${S.hand==="izquierda"?"selected":""}>Izquierda</option></select></label>
+      <div class="row"><button type="button" class="btn btn-green" id="saveAll">Guardar ajustes</button></div>
+    </div>
+    <div class="card stack">
+      <h3>Empezar de nuevo</h3>
+      <p class="muted">Borra tu avance y la conversación de este dispositivo.</p>
+      <div class="row" id="resetRow"><button type="button" class="btn btn-ghost" id="reset">Borrar mi avance</button></div>
+    </div>
+  </section>`;
+  app.querySelectorAll('input[name=ai]').forEach(r=>r.onchange=()=>{ $("#keyBox").hidden = r.value!=="apikey"; });
+  $("#saveAll").onclick=()=>{
+    S.ai = app.querySelector('input[name=ai]:checked').value;
+    S.apiKey = $("#key").value.trim(); S.model = $("#model").value.trim()||"claude-opus-5-5";
+    S.voiceOn=$("#voiceOn").checked; S.autoRead=$("#autoRead").checked; S.rate=+$("#rate").value;
+    const vs=$("#voice"); if(vs) S.voiceName=vs.value;
+    S.name=$("#nm2").value.trim(); S.limits=$("#lim2").value.trim(); S.hand=$("#hand2").value;
+    save(); toast("Ajustes guardados.");
+  };
+  $("#rate").oninput=e=>{ S.rate=+e.target.value; };
+  $("#reset").onclick=()=>{ $("#resetRow").innerHTML=`<span>¿Seguro? Esto no se puede deshacer.</span><button type="button" class="btn btn-ghost btn-small" id="no">No, volver</button><button type="button" class="btn btn-small" style="background:var(--alert);color:#fff" id="yes">Sí, borrar</button>`;
+    $("#no").onclick=()=>render(); $("#yes").onclick=()=>{ const keep={ai:S.ai,apiKey:S.apiKey,model:S.model,size:S.size}; S={...defaults,...keep}; save(); toast("Avance borrado."); go("inicio"); }; };
+}
+
+if (synth && synth.onvoiceschanged!==undefined) synth.onvoiceschanged = () => { if (view==="ajustes") {} };
+render();
+})();
+</script>
+</body></html>
