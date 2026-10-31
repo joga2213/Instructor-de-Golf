@@ -254,9 +254,10 @@ const SAFETY_MSG = "Para ahora mismo y descansa.\nLo que describes necesita aten
 /* ---------------- Estado ---------------- */
 const KEY = "miProfesorGolf.v1";
 const defaults = {name:"", limits:"", hand:"derecha", current:0, step:0, done:[], practice:{}, warmupDate:"",
-  ai:"claude", apiKey:"", model:"claude-opus-5-5", voiceOn:true, autoRead:false, rate:0.9, voiceName:"", size:"md", chat:[]};
+  ai:"claude", keys:{}, models:{}, voiceOn:true, autoRead:false, rate:0.9, voiceName:"", size:"md", chat:[]};
 let S = {...defaults};
 try { const raw = localStorage.getItem(KEY); if (raw) S = {...defaults, ...JSON.parse(raw)}; } catch(e) {}
+if (S.ai==="apikey") { S.ai="anthropic"; S.keys={...S.keys, anthropic:S.apiKey||""}; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
 
 document.documentElement.dataset.size = S.size;
@@ -327,24 +328,53 @@ Reglas:
 
 async function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
 
+const PROVIDERS = {
+  anthropic:{name:"Claude (Anthropic)", model:"claude-opus-5-5", hint:"Empieza con \"sk-ant-\". Consíguela en console.anthropic.com.", ph:"sk-ant-..."},
+  gemini:{name:"Gemini (Google)", model:"gemini-3.8-flash", hint:"Consíguela gratis en aistudio.google.com.", ph:"AIza..."},
+  openai:{name:"ChatGPT (OpenAI)", model:"gpt-5.4-mini", hint:"Empieza con \"sk-\". Consíguela en platform.openai.com.", ph:"sk-..."}
+};
+
+/* Llama a cualquier proveedor con el mismo formato de mensajes. */
+async function callProvider(prov, key, model, system, history, image, signal){
+  const img = image ? {type:image.type||"image/jpeg", data: await blobToB64(image)} : null;
+  let url, headers, body, pick;
+  if (prov==="anthropic") {
+    const msgs = history.map(m => ({role:m.role, content:m.content}));
+    if (img) { const l=msgs[msgs.length-1]; l.content=[{type:"image", source:{type:"base64", media_type:img.type, data:img.data}}, {type:"text", text:l.content}]; }
+    url="https://api.anthropic.com/v1/messages";
+    headers={"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+    body={model, max_tokens:700, system, messages:msgs};
+    pick=j=>(j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+  } else if (prov==="gemini") {
+    const contents = history.map(m => ({role:m.role==="assistant"?"model":"user", parts:[{text:m.content}]}));
+    if (img) contents[contents.length-1].parts.unshift({inline_data:{mime_type:img.type, data:img.data}});
+    url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent";
+    headers={"content-type":"application/json","x-goog-api-key":key};
+    body={systemInstruction:{parts:[{text:system}]}, contents, generationConfig:{maxOutputTokens:2048}};
+    pick=j=>((j.candidates||[])[0]?.content?.parts||[]).filter(p=>p.text && !p.thought).map(p=>p.text).join("");
+  } else {
+    const msgs = [{role:"system", content:system}, ...history.map(m => ({role:m.role, content:m.content}))];
+    if (img) { const l=msgs[msgs.length-1]; l.content=[{type:"text", text:l.content}, {type:"image_url", image_url:{url:"data:"+img.type+";base64,"+img.data}}]; }
+    url="https://api.openai.com/v1/chat/completions";
+    headers={"content-type":"application/json","authorization":"Bearer "+key};
+    body={model, messages:msgs, max_completion_tokens:2048};
+    pick=j=>(j.choices||[])[0]?.message?.content||"";
+  }
+  let r;
+  try { r = await fetch(url, {method:"POST", signal, headers, body:JSON.stringify(body)}); }
+  catch(e) { if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"blocked"}; }
+  if (!r.ok) { let m=""; try{ const j=await r.json(); m=j.error?.message||(typeof j.error==="string"?j.error:""); }catch(e){} throw {code:"http", message:m||("Error "+r.status)}; }
+  const text = pick(await r.json()).trim();
+  if (!text) throw {code:"empty"};
+  return text;
+}
+
 async function askAI(history, image, onText, signal){
   if (S.ai === "off") throw {code:"off"};
-  if (S.ai === "apikey") {
-    if (!S.apiKey) throw {code:"nokey"};
-    const msgs = history.map(m => ({role:m.role, content:m.content}));
-    if (image) {
-      const last = msgs[msgs.length-1];
-      last.content = [{type:"image", source:{type:"base64", media_type:image.type||"image/jpeg", data: await blobToB64(image)}}, {type:"text", text:last.content}];
-    }
-    let r;
-    try {
-      r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", signal,
-        headers:{"content-type":"application/json","x-api-key":S.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-        body: JSON.stringify({model:S.model||"claude-opus-5-5", max_tokens:700, system:teacherRules(), messages:msgs})});
-    } catch(e) { throw {code:"blocked"}; }
-    if (!r.ok) { let m=""; try{ m=(await r.json()).error?.message||""; }catch(e){} throw {code:"http", message:m||("Error "+r.status)}; }
-    const j = await r.json();
-    const text = (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+  if (PROVIDERS[S.ai]) {
+    const key = (S.keys||{})[S.ai]; if (!key) throw {code:"nokey"};
+    const model = (S.models||{})[S.ai] || PROVIDERS[S.ai].model;
+    const text = await callProvider(S.ai, key, model, teacherRules(), history, image, signal);
     onText && onText(text); return text;
   }
   const sample = await samplePromise;
@@ -373,8 +403,9 @@ async function askServer(history, image, onText, signal){
 function aiErrorCopy(e){
   switch(e && e.code){
     case "off": return "La IA está apagada. Puedes activarla en Ajustes.";
-    case "nokey": return "Falta tu clave de API. Ponla en Ajustes, o elige \"Claude integrado\".";
-    case "blocked": return "No pude conectar con la API desde aquí. La clave propia funciona al abrir la app como archivo en tu computadora. Dentro de Claude, usa \"Claude integrado\".";
+    case "nokey": return "Falta tu clave de API. Ponla en Ajustes, o elige \"Profesor incluido\".";
+    case "blocked": return "No pude conectar con la IA desde aquí. Las claves propias funcionan en la web publicada o al abrir el archivo en tu computadora. Dentro de Claude, usa \"Profesor incluido\".";
+    case "empty": return "La IA no devolvió respuesta. Intenta de nuevo o prueba otro modelo en Ajustes.";
     case "http": return "La API respondió con un error: "+(e.message||"")+". Revisa tu clave en Ajustes.";
     case "nosample": return "El profesor con IA no está disponible en esta vista. Prueba abrir la app dentro de Claude, o usa tu clave en Ajustes.";
     case "not_granted": return "No se dio permiso para usar Claude. Puedes seguir con las lecciones sin IA.";
@@ -535,7 +566,7 @@ function vLeccion(){
 let pendingQuestion = "";
 let photo = null; let ctl = null;
 function vProfesor(){
-  const modeLabel = S.ai==="claude"?"Claude integrado":S.ai==="apikey"?"Tu clave de API":"IA apagada";
+  const modeLabel = S.ai==="claude"?"Profesor incluido":PROVIDERS[S.ai]?PROVIDERS[S.ai].name:"IA apagada";
   if (!S.chat.length) S.chat.push({role:"assistant", content:`Hola${S.name?" "+S.name:""}. Soy tu profesor. Vamos por la lección ${S.current+1}: ${LESSONS[S.current].title.toLowerCase()}.\nPuedes preguntarme lo que quieras, o mandarme una foto de tu postura o tu agarre.\n¿Empezamos?`});
   app.innerHTML = `<section class="view stack">
     <div class="row" style="justify-content:space-between"><h2>Tu profesor</h2><span class="status">${esc(modeLabel)} · <button type="button" class="term" id="toSet">cambiar</button></span></div>
@@ -656,15 +687,11 @@ function vAjustes(){
     <div class="card stack">
       <h3>Profesor con inteligencia artificial</h3>
       <div class="seg" role="radiogroup">
-        <label class="opt"><input type="radio" name="ai" value="claude" ${S.ai==="claude"?"checked":""}><span><b>Claude integrado</b><br><span class="muted">No necesitas clave. Dentro de Claude usa tu cuenta; en la web usa el servidor de la app. Puede ver tus fotos.</span></span></label>
-        <label class="opt"><input type="radio" name="ai" value="apikey" ${S.ai==="apikey"?"checked":""}><span><b>Mi clave de API de Anthropic</b><br><span class="muted">Para usar la app como archivo en tu computadora o en tu propio sitio.</span></span></label>
+        <label class="opt"><input type="radio" name="ai" value="claude" ${S.ai==="claude"?"checked":""}><span><b>Profesor incluido</b><br><span class="muted">No necesitas clave. Dentro de Claude usa tu cuenta; en la web usa el servidor de la app. Puede ver tus fotos.</span></span></label>
+        ${Object.entries(PROVIDERS).map(([k,p])=>`<label class="opt"><input type="radio" name="ai" value="${k}" ${S.ai===k?"checked":""}><span><b>${p.name} con mi clave</b><br><span class="muted">Modelo sugerido: ${p.model}.</span></span></label>`).join("")}
         <label class="opt"><input type="radio" name="ai" value="off" ${S.ai==="off"?"checked":""}><span><b>Sin IA</b><br><span class="muted">Solo lecciones guiadas. No envía nada a internet.</span></span></label>
       </div>
-      <div id="keyBox" class="stack" ${S.ai==="apikey"?"":"hidden"}>
-        <label class="f">Clave de API<span class="h">Empieza con "sk-ant-". Se guarda solo en este dispositivo.</span><input id="key" type="password" autocomplete="off" value="${esc(S.apiKey)}" placeholder="sk-ant-..."></label>
-        <label class="f">Modelo<input id="model" type="text" value="${esc(S.model)}"></label>
-        <p class="status">Consíguela en console.anthropic.com. No compartas tu clave con nadie.</p>
-      </div>
+      <div id="keyBox" class="stack"></div>
     </div>
     <div class="card stack">
       <h3>Voz</h3>
@@ -688,10 +715,20 @@ function vAjustes(){
       <div class="row" id="resetRow"><button type="button" class="btn btn-ghost" id="reset">Borrar mi avance</button></div>
     </div>
   </section>`;
-  app.querySelectorAll('input[name=ai]').forEach(r=>r.onchange=()=>{ $("#keyBox").hidden = r.value!=="apikey"; });
+  const drawKey=()=>{ const k=app.querySelector('input[name=ai]:checked').value, p=PROVIDERS[k], box=$("#keyBox");
+    if(!p){ box.hidden=true; box.innerHTML=""; return; } box.hidden=false;
+    box.innerHTML=`<label class="f">Clave de ${p.name}<span class="h">${p.hint} Se guarda solo en este dispositivo.</span><input id="key" type="password" autocomplete="off" value="${esc((S.keys||{})[k]||"")}" placeholder="${p.ph}"></label>
+      <label class="f">Modelo<span class="h">Puedes cambiarlo cuando salga uno nuevo.</span><input id="model" type="text" value="${esc((S.models||{})[k]||p.model)}"></label>
+      <div class="row"><button type="button" class="btn btn-ghost btn-small" id="testKey">Probar conexión</button><span class="status" id="testOut"></span></div>
+      <p class="status">No compartas tu clave con nadie.</p>`;
+    $("#testKey").onclick=async()=>{ const out=$("#testOut"); out.textContent="Probando…";
+      try{ const t=await callProvider(k, $("#key").value.trim(), $("#model").value.trim()||p.model, "Responde en español con una frase corta.", [{role:"user",content:"Saluda a un alumno de golf."}], null); out.textContent="Funciona: "+t.slice(0,80); }
+      catch(e){ out.textContent=aiErrorCopy(e); } };
+  };
+  app.querySelectorAll('input[name=ai]').forEach(r=>r.onchange=drawKey); drawKey();
   $("#saveAll").onclick=()=>{
     S.ai = app.querySelector('input[name=ai]:checked').value;
-    S.apiKey = $("#key").value.trim(); S.model = $("#model").value.trim()||"claude-opus-5-5";
+    if (PROVIDERS[S.ai]) { S.keys={...S.keys,[S.ai]:$("#key").value.trim()}; S.models={...S.models,[S.ai]:$("#model").value.trim()||PROVIDERS[S.ai].model}; }
     S.voiceOn=$("#voiceOn").checked; S.autoRead=$("#autoRead").checked; S.rate=+$("#rate").value;
     const vs=$("#voice"); if(vs) S.voiceName=vs.value;
     S.name=$("#nm2").value.trim(); S.limits=$("#lim2").value.trim(); S.hand=$("#hand2").value;
@@ -699,7 +736,7 @@ function vAjustes(){
   };
   $("#rate").oninput=e=>{ S.rate=+e.target.value; };
   $("#reset").onclick=()=>{ $("#resetRow").innerHTML=`<span>¿Seguro? Esto no se puede deshacer.</span><button type="button" class="btn btn-ghost btn-small" id="no">No, volver</button><button type="button" class="btn btn-small" style="background:var(--alert);color:#fff" id="yes">Sí, borrar</button>`;
-    $("#no").onclick=()=>render(); $("#yes").onclick=()=>{ const keep={ai:S.ai,apiKey:S.apiKey,model:S.model,size:S.size}; S={...defaults,...keep}; save(); toast("Avance borrado."); go("inicio"); }; };
+    $("#no").onclick=()=>render(); $("#yes").onclick=()=>{ const keep={ai:S.ai,keys:S.keys,models:S.models,size:S.size}; S={...defaults,...keep}; save(); toast("Avance borrado."); go("inicio"); }; };
 }
 
 if (synth && synth.onvoiceschanged!==undefined) synth.onvoiceschanged = () => { if (view==="ajustes") {} };
