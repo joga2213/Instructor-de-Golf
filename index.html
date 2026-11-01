@@ -286,6 +286,7 @@ const LESSONS = [
   tip:"Usa carrito si el campo es largo. Cuidar la energía también es jugar bien."}
 ];
 
+const PRIVACY = "Para responderte, tus preguntas y fotos se envían a un servicio de inteligencia artificial: Google Gemini, Anthropic (Claude) u OpenAI, según cómo esté configurada la app. Si se usa el plan gratis de Gemini, Google puede usar lo que envías para mejorar sus productos. Te recomendamos no enviar fotos donde se vea tu cara ni datos personales. Tu avance y tus conversaciones se guardan solo en este dispositivo.";
 const SAFETY_RE = /(dolor (en el |del |de )?pecho|pecho me duele|me duele el pecho|mare[oa]|me mareo|falta de aire|me falta el aire|no puedo respirar|me ahogo|dolor agudo|dolor fuerte|dolor punzante|palpitaciones)/i;
 const SAFETY_MSG = "Para ahora mismo y descansa.\nLo que describes necesita atención. Consulta a un médico antes de seguir practicando.\nSi el dolor es fuerte o no pasa, llama a emergencias.";
 
@@ -434,11 +435,17 @@ async function askServer(history, image, onText, signal){
   const profile = `Alumno: ${S.name||"sin nombre"}. Mano: ${S.hand}. Limitaciones: ${S.limits||"ninguna indicada"}. Lección actual: ${S.current+1} de 8, "${L.title}".`;
   const body = {profile, messages: history.map(m => ({role:m.role, content:m.content}))};
   if (image) body.image = {type: image.type || "image/jpeg", data: await blobToB64(image)};
+  // Límite de espera: si tarda más de 45 segundos, se corta con un mensaje claro.
+  const ctl2 = new AbortController(); let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctl2.abort(); }, 45000);
+  if (signal) signal.addEventListener("abort", () => ctl2.abort(), {once:true});
   let r;
-  try { r = await fetch("/api/chat", {method:"POST", signal, headers:{"content-type":"application/json"}, body: JSON.stringify(body)}); }
-  catch(e) { if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"nosample"}; }
+  try { r = await fetch("/api/chat", {method:"POST", signal: ctl2.signal, headers:{"content-type":"application/json"}, body: JSON.stringify(body)}); }
+  catch(e) { clearTimeout(timer); if (timedOut) throw {code:"timeout"}; if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"network"}; }
+  clearTimeout(timer);
   if (r.status===404 || r.status===405) throw {code:"nosample"};
   if (r.status===429) throw {code:"rate_limited"};
+  if (r.status===504) throw {code:"timeout"};
   if (!r.ok) { let m=""; try{ m=(await r.json()).error||""; }catch(e){} throw {code: r.status===503?"nokeyserver":"server", message:m}; }
   const j = await r.json(); const text = j.text || "";
   onText && onText(text); return text;
@@ -456,6 +463,8 @@ function aiErrorCopy(e){
     case "images_unavailable": return "Aquí no puedo ver fotos. Descríbeme lo que ves y te ayudo.";
     case "server": return "El servidor del profesor tuvo un problema"+(e.message?": "+e.message:"")+". Intenta de nuevo en un momento.";
     case "nokeyserver": return "Falta la clave de la IA en el servidor. En Vercel, agrega GEMINI_API_KEY en Settings, Environment Variables, y luego haz Redeploy.";
+    case "timeout": return "El profesor tardó demasiado en responder. Intenta de nuevo con una pregunta más corta.";
+    case "network": return "No hay conexión a internet, o se cortó. Revisa la señal e intenta de nuevo.";
     case "cancelled": return "";
     default: return "No pude responder ahora. Intenta de nuevo en un momento.";
   }
@@ -867,6 +876,7 @@ function vProfesor(){
   if (!S.chat.length) S.chat.push({role:"assistant", content:`Hola${S.name?" "+S.name:""}. Soy tu profesor. Vamos por la lección ${S.current+1}: ${LESSONS[S.current].title.toLowerCase()}.\nPuedes preguntarme lo que quieras, o mandarme una foto de tu postura o tu agarre.\n¿Empezamos?`});
   app.innerHTML = `<section class="view stack">
     <div class="row" style="justify-content:space-between"><h2>Tu profesor</h2><span class="status">${esc(modeLabel)} · <button type="button" class="term" id="toSet">cambiar</button></span></div>
+    ${!S.privacyOk && S.ai!=="off" ? `<div class="tip stack" id="priv" style="gap:10px"><b>Antes de empezar: tu privacidad</b><p>${esc(PRIVACY)}</p><div><button type="button" class="btn btn-green btn-small" id="privOk">Entendido</button></div></div>` : ""}
     <div class="chips" aria-label="Preguntas rápidas">
       <button type="button" class="chip" data-q="Explícame la lección de hoy, paso a paso.">La lección de hoy</button>
       <button type="button" class="chip" data-q="¿Qué palo uso?">¿Qué palo uso?</button>
@@ -887,14 +897,15 @@ function vProfesor(){
     </div>
   </section>`;
   const chat=$("#chat"), q=$("#q");
-  const drawMsgs=()=>{ chat.innerHTML = S.chat.map(m=>`<div class="msg ${m.role==="user"?"me":"bot"} ${m.warn?"warn":""}">${m.img?`<img src="${m.img}" alt="Tu foto">`:""}${esc(m.content)}${m.role==="assistant"&&m.content?`<div>${speakBtn(m.content)}</div>`:""}</div>`).join(""); };
+  const drawMsgs=()=>{ chat.innerHTML = S.chat.map(m=>`<div class="msg ${m.role==="user"?"me":"bot"} ${m.warn?"warn":""}">${m.img?`<img src="${m.img}" alt="Tu foto">`:""}${esc(m.content)}${m.role==="assistant"&&m.content&&!m.content.startsWith("Pensando…")?`<div>${speakBtn(m.content)}</div>`:""}</div>`).join(""); };
   drawMsgs();
   if (pendingQuestion){ q.value=pendingQuestion; pendingQuestion=""; q.focus(); }
   $("#toSet").onclick=()=>go("ajustes");
+  const po=$("#privOk"); if (po) po.onclick=()=>{ S.privacyOk=true; save(); $("#priv").remove(); };
   $("#clear").onclick=()=>{ S.chat=[]; save(); render(); };
   $("#mic").onclick=e=>dictate(q, e.currentTarget);
   $("#ph").onchange=e=>{ const f=e.target.files[0]; if(!f) return; photo=f; const url=URL.createObjectURL(f);
-    $("#photoPrev").innerHTML=`<div class="row"><img src="${url}" alt="Foto elegida" style="max-height:90px;border-radius:10px"><span class="muted">Foto lista. Dime qué es: agarre, postura o swing.</span><button type="button" class="btn btn-ghost btn-small" id="rmPh">Quitar</button></div>`;
+    $("#photoPrev").innerHTML=`<div class="row"><img src="${url}" alt="Foto elegida" style="max-height:90px;border-radius:10px"><span class="muted">Foto lista. Dime qué es: agarre, postura o swing. Se enviará al servicio de IA.</span><button type="button" class="btn btn-ghost btn-small" id="rmPh">Quitar</button></div>`;
     if(!q.value) q.value="Mira mi foto. ¿Qué hago bien y qué corrijo?";
     $("#rmPh").onclick=()=>{photo=null;$("#photoPrev").innerHTML="";$("#ph").value="";}; };
   app.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{ q.value=b.dataset.q; send(); });
@@ -909,7 +920,7 @@ function vProfesor(){
     S.chat.push({role:"user", content:text||"Mira mi foto.", img:imgThumb||undefined});
     q.value="";
     if (SAFETY_RE.test(text)) { S.chat.push({role:"assistant", content:SAFETY_MSG, warn:true}); save(); drawMsgs(); speak(SAFETY_MSG); photo=null; $("#photoPrev").innerHTML=""; return; }
-    const bot={role:"assistant", content:"Pensando…"}; S.chat.push(bot); drawMsgs(); scrollEnd();
+    const bot={role:"assistant", content:"Pensando… puede tardar unos segundos."}; S.chat.push(bot); drawMsgs(); scrollEnd();
     const history = S.chat.slice(0,-1).filter(m=>!m.warn).slice(-12).map(m=>({role:m.role, content:m.content}));
     while (history.length && history[0].role!=="user") history.shift();
     const img=photo; photo=null; $("#photoPrev").innerHTML=""; $("#ph").value="";
@@ -998,6 +1009,11 @@ function vAjustes(){
       ${voices.length?`<label class="f">Voz<select id="voice">${voices.map(v=>`<option value="${esc(v.name)}" ${cur&&v.name===cur.name?"selected":""}>${esc(voiceRegion(v.lang))} · ${esc(v.name)}</option>`).join("")}</select></label>`:`<p class="status">${synth?"Las voces en español se cargan al abrir esta página por primera vez.":"Este navegador no puede leer en voz alta."}</p>`}
       <div><button type="button" class="btn btn-ghost btn-small" data-say="Hola. Soy tu profesor de golf. Vamos con calma.">${ICON.speak}Probar voz</button></div>
       <p class="status">Dictado por voz: ${SR?"disponible en este navegador.":"no disponible aquí. Usa el micrófono del teclado de tu teléfono."}</p>
+    </div>
+    <div class="card stack">
+      <h3>Privacidad</h3>
+      <p class="muted">${esc(PRIVACY)}</p>
+      <p class="muted">Si eliges "Sin IA", la app no envía nada a internet.</p>
     </div>
     <div class="card stack">
       <h3>Mis datos</h3>

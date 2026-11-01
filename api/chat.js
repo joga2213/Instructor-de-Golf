@@ -27,7 +27,10 @@ async function callProvider(prov, key, model, system, messages, img) {
     if (img) contents[contents.length - 1].parts.unshift({ inline_data: { mime_type: img.type, data: img.data } });
     url = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent";
     headers = { "content-type": "application/json", "x-goog-api-key": key };
-    body = { systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { maxOutputTokens: 2048 } };
+    // En Gemini 3 se pide poco razonamiento: responde más rápido y alcanza para estas preguntas.
+    const gen = { maxOutputTokens: 1024 };
+    if (/^gemini-3/.test(model)) gen.thinkingConfig = { thinkingLevel: "low" };
+    body = { systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: gen };
     pick = j => (((j.candidates || [])[0] || {}).content || { parts: [] }).parts.filter(p => p.text && !p.thought).map(p => p.text).join("");
   } else {
     const msgs = [{ role: "system", content: system }, ...messages.map(m => ({ role: m.role, content: m.content }))];
@@ -37,8 +40,14 @@ async function callProvider(prov, key, model, system, messages, img) {
     body = { model, messages: msgs, max_completion_tokens: 2048 };
     pick = j => (((j.choices || [])[0] || {}).message || {}).content || "";
   }
-  const r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-  const j = await r.json();
+  let r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+  let j = await r.json();
+  // Si el modelo no acepta el ajuste de razonamiento, se reintenta una vez sin él.
+  if (!r.ok && r.status === 400 && body.generationConfig && body.generationConfig.thinkingConfig) {
+    delete body.generationConfig.thinkingConfig;
+    r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+    j = await r.json();
+  }
   if (!r.ok) { const e = new Error((j.error && (j.error.message || j.error)) || "Error de la API"); e.status = r.status; throw e; }
   return pick(j).trim();
 }
