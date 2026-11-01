@@ -435,11 +435,17 @@ async function askServer(history, image, onText, signal){
   const profile = `Alumno: ${S.name||"sin nombre"}. Mano: ${S.hand}. Limitaciones: ${S.limits||"ninguna indicada"}. Lección actual: ${S.current+1} de 8, "${L.title}".`;
   const body = {profile, messages: history.map(m => ({role:m.role, content:m.content}))};
   if (image) body.image = {type: image.type || "image/jpeg", data: await blobToB64(image)};
+  // Límite de espera: si tarda más de 45 segundos, se corta con un mensaje claro.
+  const ctl2 = new AbortController(); let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctl2.abort(); }, 45000);
+  if (signal) signal.addEventListener("abort", () => ctl2.abort(), {once:true});
   let r;
-  try { r = await fetch("/api/chat", {method:"POST", signal, headers:{"content-type":"application/json"}, body: JSON.stringify(body)}); }
-  catch(e) { if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"nosample"}; }
+  try { r = await fetch("/api/chat", {method:"POST", signal: ctl2.signal, headers:{"content-type":"application/json"}, body: JSON.stringify(body)}); }
+  catch(e) { clearTimeout(timer); if (timedOut) throw {code:"timeout"}; if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"network"}; }
+  clearTimeout(timer);
   if (r.status===404 || r.status===405) throw {code:"nosample"};
   if (r.status===429) throw {code:"rate_limited"};
+  if (r.status===504) throw {code:"timeout"};
   if (!r.ok) { let m=""; try{ m=(await r.json()).error||""; }catch(e){} throw {code: r.status===503?"nokeyserver":"server", message:m}; }
   const j = await r.json(); const text = j.text || "";
   onText && onText(text); return text;
@@ -457,6 +463,8 @@ function aiErrorCopy(e){
     case "images_unavailable": return "Aquí no puedo ver fotos. Descríbeme lo que ves y te ayudo.";
     case "server": return "El servidor del profesor tuvo un problema"+(e.message?": "+e.message:"")+". Intenta de nuevo en un momento.";
     case "nokeyserver": return "Falta la clave de la IA en el servidor. En Vercel, agrega GEMINI_API_KEY en Settings, Environment Variables, y luego haz Redeploy.";
+    case "timeout": return "El profesor tardó demasiado en responder. Intenta de nuevo con una pregunta más corta.";
+    case "network": return "No hay conexión a internet, o se cortó. Revisa la señal e intenta de nuevo.";
     case "cancelled": return "";
     default: return "No pude responder ahora. Intenta de nuevo en un momento.";
   }
@@ -889,7 +897,7 @@ function vProfesor(){
     </div>
   </section>`;
   const chat=$("#chat"), q=$("#q");
-  const drawMsgs=()=>{ chat.innerHTML = S.chat.map(m=>`<div class="msg ${m.role==="user"?"me":"bot"} ${m.warn?"warn":""}">${m.img?`<img src="${m.img}" alt="Tu foto">`:""}${esc(m.content)}${m.role==="assistant"&&m.content?`<div>${speakBtn(m.content)}</div>`:""}</div>`).join(""); };
+  const drawMsgs=()=>{ chat.innerHTML = S.chat.map(m=>`<div class="msg ${m.role==="user"?"me":"bot"} ${m.warn?"warn":""}">${m.img?`<img src="${m.img}" alt="Tu foto">`:""}${esc(m.content)}${m.role==="assistant"&&m.content&&!m.content.startsWith("Pensando…")?`<div>${speakBtn(m.content)}</div>`:""}</div>`).join(""); };
   drawMsgs();
   if (pendingQuestion){ q.value=pendingQuestion; pendingQuestion=""; q.focus(); }
   $("#toSet").onclick=()=>go("ajustes");
@@ -912,7 +920,7 @@ function vProfesor(){
     S.chat.push({role:"user", content:text||"Mira mi foto.", img:imgThumb||undefined});
     q.value="";
     if (SAFETY_RE.test(text)) { S.chat.push({role:"assistant", content:SAFETY_MSG, warn:true}); save(); drawMsgs(); speak(SAFETY_MSG); photo=null; $("#photoPrev").innerHTML=""; return; }
-    const bot={role:"assistant", content:"Pensando…"}; S.chat.push(bot); drawMsgs(); scrollEnd();
+    const bot={role:"assistant", content:"Pensando… puede tardar unos segundos."}; S.chat.push(bot); drawMsgs(); scrollEnd();
     const history = S.chat.slice(0,-1).filter(m=>!m.warn).slice(-12).map(m=>({role:m.role, content:m.content}));
     while (history.length && history[0].role!=="user") history.shift();
     const img=photo; photo=null; $("#photoPrev").innerHTML=""; $("#ph").value="";
