@@ -40,12 +40,13 @@ async function callProvider(prov, key, model, system, messages, img) {
     body = { model, messages: msgs, max_completion_tokens: 2048 };
     pick = j => (((j.choices || [])[0] || {}).message || {}).content || "";
   }
-  let r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+  const send = () => fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) });
+  let r = await send();
   let j = await r.json();
   // Si el modelo no acepta el ajuste de razonamiento, se reintenta una vez sin él.
   if (!r.ok && r.status === 400 && body.generationConfig && body.generationConfig.thinkingConfig) {
     delete body.generationConfig.thinkingConfig;
-    r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+    r = await send();
     j = await r.json();
   }
   if (!r.ok) { const e = new Error((j.error && (j.error.message || j.error)) || "Error de la API"); e.status = r.status; throw e; }
@@ -73,6 +74,21 @@ function limited(ip) {
   return list.length > 30;
 }
 
+// Modelos de respaldo cuando el principal está saturado (errores 429, 500, 503 o tiempo agotado).
+const FALLBACKS = { gemini: ["gemini-3.6-flash", "gemini-3.5-flash-lite"], anthropic: [], openai: [] };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const retryable = e => !e.status || e.status === 429 || e.status >= 500;
+
+function plan(prov) {
+  const main = process.env.AI_MODEL || process.env.CLAUDE_MODEL || DEFAULT_MODEL[prov];
+  const extra = (process.env.AI_FALLBACK_MODELS || "").split(",").map(x => x.trim()).filter(Boolean);
+  const steps = [[prov, main], [prov, main]]; // el principal se intenta dos veces
+  for (const m of (extra.length ? extra : FALLBACKS[prov])) if (m !== main) steps.push([prov, m]);
+  // Si hay claves de otros proveedores, se usan como último recurso.
+  for (const other of Object.keys(KEY_ENV)) if (other !== prov && process.env[KEY_ENV[other]]) steps.push([other, DEFAULT_MODEL[other]]);
+  return steps;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Usa POST" });
   const prov = pickProvider();
@@ -92,11 +108,19 @@ module.exports = async function handler(req, res) {
   const raw = body.image;
   const img = raw && typeof raw.data === "string" && /^image\/(jpeg|png|webp|gif)$/.test(raw.type) && raw.data.length < 7_000_000 ? raw : null;
 
-  try {
-    const model = process.env.AI_MODEL || process.env.CLAUDE_MODEL || DEFAULT_MODEL[prov];
-    const text = await callProvider(prov, process.env[KEY_ENV[prov]], model, RULES + "\n\n" + profile, messages, img);
-    return res.status(200).json({ text, provider: prov });
-  } catch (e) {
-    return res.status(502).json({ error: e.message || "No se pudo conectar con la IA" });
+  const started = Date.now();
+  let last = null;
+  for (const [i, [p, model]] of plan(prov).entries()) {
+    if (Date.now() - started > 40000) break;
+    if (i === 1) await sleep(1200);
+    try {
+      const text = await callProvider(p, process.env[KEY_ENV[p]], model, RULES + "\n\n" + profile, messages, img);
+      if (text) return res.status(200).json({ text, provider: p, model });
+    } catch (e) {
+      last = e;
+      if (!retryable(e)) break;
+    }
   }
+  if (last && retryable(last)) return res.status(502).json({ code: "busy", error: (last && last.message) || "Servicio ocupado" });
+  return res.status(502).json({ error: (last && last.message) || "No se pudo conectar con la IA" });
 };

@@ -446,7 +446,7 @@ async function askServer(history, image, onText, signal){
   if (r.status===404 || r.status===405) throw {code:"nosample"};
   if (r.status===429) throw {code:"rate_limited"};
   if (r.status===504) throw {code:"timeout"};
-  if (!r.ok) { let m=""; try{ m=(await r.json()).error||""; }catch(e){} throw {code: r.status===503?"nokeyserver":"server", message:m}; }
+  if (!r.ok) { let j={}; try{ j=await r.json(); }catch(e){} if (j.code==="busy") throw {code:"busy"}; throw {code: r.status===503?"nokeyserver":"server", message:j.error||""}; }
   const j = await r.json(); const text = j.text || "";
   onText && onText(text); return text;
 }
@@ -463,6 +463,7 @@ function aiErrorCopy(e){
     case "images_unavailable": return "Aquí no puedo ver fotos. Descríbeme lo que ves y te ayudo.";
     case "server": return "El servidor del profesor tuvo un problema"+(e.message?": "+e.message:"")+". Intenta de nuevo en un momento.";
     case "nokeyserver": return "Falta la clave de la IA en el servidor. En Vercel, agrega GEMINI_API_KEY en Settings, Environment Variables, y luego haz Redeploy.";
+    case "busy": return "La inteligencia artificial está muy ocupada en este momento. Espera un par de minutos y vuelve a preguntar. Mientras tanto, puedes seguir con tu lección.";
     case "timeout": return "El profesor tardó demasiado en responder. Intenta de nuevo con una pregunta más corta.";
     case "network": return "No hay conexión a internet, o se cortó. Revisa la señal e intenta de nuevo.";
     case "cancelled": return "";

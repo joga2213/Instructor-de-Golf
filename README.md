@@ -19,7 +19,9 @@ Web app en español que enseña golf paso a paso a personas mayores que empiezan
    - `ANTHROPIC_API_KEY`: clave de https://console.anthropic.com (modelo por defecto `claude-opus-5-5`).
    - `OPENAI_API_KEY`: clave de https://platform.openai.com (modelo por defecto `gpt-5.4-mini`).
 
-   Opcionales: `AI_PROVIDER` (`gemini`, `anthropic` u `openai`) si pusiste varias claves, y `AI_MODEL` para usar otro modelo.
+   Opcionales: `AI_PROVIDER` (`gemini`, `anthropic` u `openai`) si pusiste varias claves, y `AI_MODEL` para usar otro modelo. `AI_FALLBACK_MODELS` (separados por comas) cambia los modelos de respaldo; con Gemini, por defecto son `gemini-3.6-flash` y `gemini-3.5-flash-lite`.
+
+   Si el modelo principal está saturado, el servidor reintenta, usa los modelos de respaldo y, si hay claves de otros proveedores, también los prueba.
 4. Vuelve a desplegar (**Deployments → Redeploy**). Listo: Vercel te da una dirección web para compartir.
 
 Cada persona también puede poner su propia clave en **Ajustes** dentro de la app.
