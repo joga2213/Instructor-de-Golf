@@ -9,6 +9,7 @@
   --bg:#f3f6f1; --surface:#ffffff; --ink:#15281c; --muted:#4d6155; --line:#d3ddd4;
   --green:#1d5b37; --green-2:#2f7a4c; --green-soft:#e1ede4; --flag:#f2c230; --flag-ink:#3a2c00;
   --alert:#a3261b; --alert-soft:#fbe9e6; --onGreen:#ffffff;
+  --mark:#c2410c; --sand:#ead9a6; --sand-d:#b89a52; --grass:#cfe3c9; --greenTop:#9fcf9a; --skin:#f2c9a5; --skin2:#e8b88f; --holec:#15281c;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:14px; --fs:18px;
@@ -16,11 +17,11 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1712; --surface:#17231b; --ink:#e8f0ea; --muted:#a6b8ac; --line:#2b3b30;
   --green:#5fbf84; --green-2:#7fd3a0; --green-soft:#1d3325; --flag:#f2c230; --flag-ink:#2a2000;
-  --alert:#ff8f80; --alert-soft:#3a1c18; --onGreen:#0c1a11; color-scheme:dark}}
+  --alert:#ff8f80; --alert-soft:#3a1c18; --onGreen:#0c1a11; --mark:#fb923c; --sand:#5c4f2e; --sand-d:#a38a4f; --grass:#1f3a27; --greenTop:#2e5a3a; --skin:#d9a982; --skin2:#c99570; --holec:#050805; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1712; --surface:#17231b; --ink:#e8f0ea; --muted:#a6b8ac; --line:#2b3b30;
   --green:#5fbf84; --green-2:#7fd3a0; --green-soft:#1d3325; --flag:#f2c230; --flag-ink:#2a2000;
-  --alert:#ff8f80; --alert-soft:#3a1c18; --onGreen:#0c1a11; color-scheme:dark}
+  --alert:#ff8f80; --alert-soft:#3a1c18; --onGreen:#0c1a11; --mark:#fb923c; --sand:#5c4f2e; --sand-d:#a38a4f; --grass:#1f3a27; --greenTop:#2e5a3a; --skin:#d9a982; --skin2:#c99570; --holec:#050805; color-scheme:dark}
 :root[data-size="lg"]{--fs:21px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -85,6 +86,43 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .counter{display:flex;align-items:center;gap:18px;justify-content:center}
 .counter output{font-family:var(--display);font-size:3em;font-weight:700;min-width:2.5ch;text-align:center;font-variant-numeric:tabular-nums}
 .round{width:64px;height:64px;border-radius:50%;border:2px solid var(--green);background:var(--surface);color:var(--green);font-size:1.6em;font-weight:700;cursor:pointer}
+/* Ilustraciones */
+.illo{margin:0;background:var(--green-soft);border-radius:12px;overflow:hidden;position:relative}
+.illo-svg{display:block;width:100%;height:auto}
+.illo-play{position:absolute;right:8px;top:8px;background:var(--surface)}
+.illo .limb{stroke:var(--ink);stroke-width:7;stroke-linecap:round;fill:none}
+.illo .shirt{fill:var(--green-2);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.illo .club{stroke:var(--muted);stroke-width:3;stroke-linecap:round;fill:none}
+.illo .clubhead{fill:var(--muted)}
+.illo .hand,.illo .head{fill:var(--skin);stroke:var(--ink);stroke-width:2}
+.illo .cap{fill:var(--flag);stroke:var(--ink);stroke-width:2}
+.illo .ghost{opacity:.2}
+.illo .ball{fill:#fff;stroke:var(--ink);stroke-width:1.5}
+.illo .grass,.illo .grassTop{fill:var(--grass)} .illo .sand,.illo .sandTop{fill:var(--sand)}
+.illo .groundline{stroke:var(--ink);stroke-width:1.5;opacity:.45}
+.illo .pole{stroke:var(--ink);stroke-width:2} .illo .flagc{fill:var(--alert)} .illo .hole{fill:var(--holec)}
+.illo .mark{stroke:var(--mark);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.illo .mark2{stroke:var(--green);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.illo .dash{stroke-dasharray:5 5}
+.illo .guide{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 5;opacity:.55;fill:none}
+.illo .guide.strong{stroke:var(--mark);opacity:1;stroke-width:2.5}
+.illo .lbl{fill:var(--ink);font:700 14px var(--body)} .illo .lbl.small{font-size:12.5px}
+.illo .big{fill:var(--mark);font:700 28px var(--display)}
+.illo .tri{fill:var(--mark);fill-opacity:.18;stroke:var(--mark);stroke-width:2}
+.illo .traj{stroke:var(--mark);stroke-width:2.5;fill:none;stroke-dasharray:6 5} .illo .roll{stroke-dasharray:2 5}
+.illo .clock{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-dasharray:3 6;opacity:.5}
+.illo .okc{fill:var(--surface);stroke:var(--green);stroke-width:3} .illo .okt{stroke:var(--green);stroke-width:3.5;fill:none;stroke-linecap:round}
+.illo .splash circle{fill:var(--sand-d)}
+.illo .shaftbig{stroke:var(--muted);stroke-width:10;stroke-linecap:round} .illo .gripend{stroke:var(--ink);stroke-width:16;stroke-linecap:round}
+.illo .handbig{fill:var(--skin);stroke:var(--ink);stroke-width:2.5} .illo .h2{fill:var(--skin2)}
+.illo .thumb{stroke:var(--ink);stroke-width:2.5;fill:none} .illo .knuck{fill:var(--mark)}
+.illo .meter{fill:var(--surface);stroke:var(--line);stroke-width:2} .illo .meter.on{fill:var(--mark);stroke:var(--mark)}
+.illo .meternum{font:700 11px var(--body);fill:var(--muted)} .illo .meternum.on{fill:#fff}
+.illo .rail{stroke:var(--mark);stroke-width:3} .illo .shoe{fill:var(--ink)}
+.illo .greenTop{fill:var(--greenTop)} .illo .routeline{stroke:var(--ink);opacity:.5;stroke-width:2.5;stroke-dasharray:6 6;fill:none}
+.illo .pitch{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:3 3} .illo .tool{fill:var(--ink)} .illo .toolprongs{stroke:var(--ink);stroke-width:3}
+.illo .card2{fill:var(--surface);stroke:var(--line);stroke-width:2} .illo .rule{stroke:var(--line);stroke-width:2}
+.illo .headTop{fill:var(--muted);stroke:var(--ink);stroke-width:2} .illo .headTop.closed{opacity:.25}
 /* Chat */
 .chat{display:flex;flex-direction:column;gap:12px;min-height:240px}
 .msg{max-width:88%;padding:12px 16px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -423,9 +461,260 @@ function aiErrorCopy(e){
   }
 }
 
+/* ---------------- Ilustraciones ---------------- */
+const GY = 214; // línea del suelo
+const rad = d => d * Math.PI / 180;
+const P2 = (x, y) => ({x, y});
+const f1 = n => Math.round(n * 10) / 10;
+const ln = (a, b, cls) => `<line x1="${f1(a.x)}" y1="${f1(a.y)}" x2="${f1(b.x)}" y2="${f1(b.y)}" class="${cls}"/>`;
+
+/* Golfista visto de frente. th: ángulo del swing (0 = preparación, negativo = hacia atrás). */
+function frontPose(o){
+  const p = {th:0, hinge:0, turn:0, shift:0, st:26, heelF:0, heelR:0, club:58, ...o};
+  const P = P2(160 + p.shift * .5, 90);
+  const L = 66;
+  const H = P2(P.x + L * Math.sin(rad(p.th)), P.y + L * Math.cos(rad(p.th)));
+  const a = p.th + p.hinge;
+  const C = P2(H.x + p.club * Math.sin(rad(a)), H.y + p.club * Math.cos(rad(a)));
+  const w = 25 * (1 - .45 * p.turn);
+  const S1 = P2(P.x - w, P.y + 2), S2 = P2(P.x + w, P.y + 2);
+  const Hp = P2(160 + p.shift, 144);
+  const F1 = P2(160 - p.st, GY - 2 - p.heelR * 6), F2 = P2(160 + p.st, GY - 2 - p.heelF * 6);
+  const K1 = P2((Hp.x - 9 + F1.x) / 2 + 3 + p.heelR * 16, 180 - p.heelR * 3);
+  const K2 = P2((Hp.x + 9 + F2.x) / 2 - 3 - p.heelF * 12, 180 - p.heelF * 3);
+  const head = P2(160 + p.shift * .15, 66);
+  return {P, H, C, S1, S2, Hp, F1, F2, K1, K2, head, p};
+}
+function drawFront(g, cls = ""){
+  const {H, C, S1, S2, Hp, F1, F2, K1, K2, head, p} = g;
+  const foot = (F, heel, dir) => heel > .3
+    ? ln(F, P2(F.x + dir * 9, F.y + 4), "limb") /* sólo la punta apoyada */
+    : `<path d="M${f1(F.x - 9)} ${GY}h18" class="limb"/>`;
+  return `<g class="fig ${cls}">
+    ${ln(P2(Hp.x - 9, Hp.y), K1, "limb")}${ln(K1, F1, "limb")}${foot(F1, p.heelR, 1)}
+    ${ln(P2(Hp.x + 9, Hp.y), K2, "limb")}${ln(K2, F2, "limb")}${foot(F2, p.heelF, -1)}
+    <path d="M${f1(Hp.x - 11)} ${Hp.y} L${f1(S1.x)} ${f1(S1.y)} L${f1(S2.x)} ${f1(S2.y)} L${f1(Hp.x + 11)} ${Hp.y} Z" class="shirt"/>
+    ${ln(S1, H, "limb")}${ln(S2, H, "limb")}
+    ${ln(H, C, "club")}<circle cx="${f1(C.x)}" cy="${f1(C.y)}" r="3.5" class="clubhead"/>
+    <circle cx="${f1(H.x)}" cy="${f1(H.y)}" r="5" class="hand"/>
+    <circle cx="${f1(head.x)}" cy="${head.y}" r="13" class="head"/>
+    <path d="M${f1(head.x - 13)} ${head.y - 4}a13 13 0 0 1 26 0z" class="cap"/>
+  </g>`;
+}
+
+/* Golfista de perfil, mirando a la derecha. */
+function sideFig(o){
+  const p = {spine:32, knee:12, club:"iron", ...o};
+  const Hp = P2(118, 142);
+  const S = P2(Hp.x + 66 * Math.sin(rad(p.spine)), Hp.y - 66 * Math.cos(rad(p.spine)));
+  const head = P2(S.x + 16 * Math.sin(rad(p.spine + 25)), S.y - 16 * Math.cos(rad(p.spine + 25)));
+  const Hn = P2(S.x + 4, S.y + 58);
+  const K = P2(130 + p.knee, 178), A = P2(132, GY - 4);
+  const B = p.club === "putter" ? P2(head.x + 2, GY - 4) : P2(Hn.x + 62, GY - 4);
+  const C = P2(B.x - (p.club === "putter" ? 2 : 6), GY - 2);
+  return {Hp, S, head, Hn, K, A, B, C, p,
+    svg: `<g class="fig">
+      ${ln(Hp, K, "limb")}${ln(K, A, "limb")}<path d="M124 ${GY}h24" class="limb"/>
+      <path d="M${Hp.x - 9} ${Hp.y + 6} L${f1(Hp.x + 8)} ${Hp.y + 4} L${f1(S.x + 7)} ${f1(S.y + 4)} L${f1(S.x - 6)} ${f1(S.y - 6)} Z" class="shirt"/>
+      ${ln(S, Hn, "limb")}
+      ${ln(Hn, C, "club")}<path d="M${f1(C.x - 1)} ${GY - 1}h${p.club === "putter" ? 10 : 9}" class="club"/>
+      <circle cx="${f1(Hn.x)}" cy="${f1(Hn.y)}" r="5" class="hand"/>
+      <circle cx="${f1(head.x)}" cy="${f1(head.y)}" r="13" class="head"/>
+      <path d="M${f1(head.x - 12)} ${f1(head.y - 4)}a13 13 0 0 1 25 0l9 3z" class="cap"/>
+    </g>`};
+}
+
+/* Notas: flechas y textos sobre el dibujo */
+function arrow(a, b, cls = "mark"){
+  const ang = Math.atan2(b.y - a.y, b.x - a.x), s = 8;
+  const l = P2(b.x - s * Math.cos(ang - .5), b.y - s * Math.sin(ang - .5));
+  const r = P2(b.x - s * Math.cos(ang + .5), b.y - s * Math.sin(ang + .5));
+  return `${ln(a, b, cls + " arrowline")}<path d="M${f1(l.x)} ${f1(l.y)} L${f1(b.x)} ${f1(b.y)} L${f1(r.x)} ${f1(r.y)}" class="${cls} arrowline"/>`;
+}
+function label(x, y, text, anchor = "start", cls = "lbl"){
+  const lines = String(text).split("\n");
+  return `<text x="${x}" y="${y}" text-anchor="${anchor}" class="${cls}">${lines.map((t, i) => `<tspan x="${x}" dy="${i ? 15 : 0}">${esc(t)}</tspan>`).join("")}</text>`;
+}
+const ball = (x, y = GY - 4) => `<circle cx="${x}" cy="${y}" r="4.5" class="ball"/>`;
+const ground = (kind = "grass") => kind === "sand"
+  ? `<path d="M0 ${GY}h320v26H0z" class="sand"/><path d="M0 ${GY}h320" class="groundline"/>`
+  : `<path d="M0 ${GY}h320v26H0z" class="grass"/><path d="M0 ${GY}h320" class="groundline"/>`;
+const flag = (x, y = GY) => `<path d="M${x} ${y}v-40" class="pole"/><path d="M${x} ${y - 40}l16 6-16 6z" class="flagc"/><ellipse cx="${x}" cy="${y}" rx="6" ry="2" class="hole"/>`;
+const targetTag = `<g>${arrow(P2(262, 30), P2(306, 30), "mark2")}${label(262, 22, "Objetivo", "start", "lbl small")}</g>`;
+
+/* Manos en el palo (vista de cerca) */
+function gripSvg(stage){
+  const shaft = `<path d="M70 32 L232 194" class="shaftbig"/><path d="M60 22 L84 46" class="gripend"/>`;
+  const left = `<g transform="rotate(45 118 82)"><rect x="88" y="58" width="62" height="48" rx="20" class="handbig"/>
+     <path d="M96 62 q10 -10 22 0" class="thumb"/></g>`;
+  const knuckles = `<circle cx="104" cy="72" r="4.5" class="knuck"/><circle cx="118" cy="66" r="4.5" class="knuck"/>`;
+  const right = `<g transform="rotate(45 160 124)"><rect x="132" y="102" width="58" height="44" rx="19" class="handbig h2"/></g>`;
+  let s = shaft + left;
+  if (stage === 0) s += knuckles + label(150, 48, "Ves 2 nudillos", "start") + arrow(P2(148, 52), P2(124, 64)) + label(186, 110, "En los dedos,\nno en la palma", "start", "lbl small");
+  if (stage === 1) s += right + `<path d="M146 112 L176 82" class="mark arrowline dash"/>` + arrow(P2(176, 82), P2(214, 44)) + label(200, 34, "Hacia tu\nhombro derecho", "start", "lbl small") + label(70, 196, "La «V» entre pulgar\ne índice", "start", "lbl small");
+  if (stage === 2) {
+    s += right;
+    let m = `<g>${label(20, 214 - 2, "Presión", "start", "lbl small")}`;
+    for (let i = 1; i <= 10; i++) m += `<rect x="${78 + (i - 1) * 22}" y="198" width="18" height="18" rx="4" class="${i <= 4 ? "meter on" : "meter"}"/><text x="${87 + (i - 1) * 22}" y="211" text-anchor="middle" class="meternum ${i <= 4 ? "on" : ""}">${i}</text>`;
+    s += m + `</g>` + label(200, 60, "Firme pero suave:\n4 de 10", "start");
+  }
+  return s;
+}
+
+/* Vista desde arriba: alineación */
+function alignSvg(){
+  return `<path d="M0 0h320v240H0z" class="grassTop"/>
+    <path d="M40 150 L270 150" class="rail"/><path d="M40 190 L270 190" class="rail"/>
+    ${label(40, 140, "Línea de la bola al objetivo", "start", "lbl small")}
+    ${label(40, 214, "Pies, caderas y hombros: paralelos", "start", "lbl small")}
+    <ellipse cx="128" cy="190" rx="13" ry="7" class="shoe"/><ellipse cx="182" cy="190" rx="13" ry="7" class="shoe"/>
+    <circle cx="155" cy="150" r="5" class="ball"/>
+    <circle cx="290" cy="150" r="7" class="hole"/><path d="M290 150v-44" class="pole"/><path d="M290 106l16 6-16 6z" class="flagc"/>
+    ${label(160, 46, "Como las vías del tren", "middle")}
+    ${arrow(P2(160, 56), P2(160, 136), "mark2")}`;
+}
+
+/* Escenas del recorrido */
+function courseSvg(stage){
+  if (stage === 0) {
+    const pts = [[40,190],[90,150],[60,100],[120,70],[170,110],[150,170],[220,190],[260,130],[230,70]];
+    let s = `<path d="M0 0h320v240H0z" class="grassTop"/>`;
+    s += `<path d="M${pts.map(p => p.join(" ")).join(" L")}" class="routeline"/>`;
+    pts.forEach((p, i) => { s += `<circle cx="${p[0]}" cy="${p[1]}" r="12" class="greenTop"/><path d="M${p[0]} ${p[1]}v-20" class="pole"/><path d="M${p[0]} ${p[1] - 20}l10 4-10 4z" class="flagc"/><text x="${p[0]}" y="${p[1] + 26}" text-anchor="middle" class="lbl small">${i + 1}</text>`; });
+    return s + label(310, 30, "9 hoyos cortos", "end");
+  }
+  if (stage === 1) return `<path d="M0 0h320v240H0z" class="grassTop"/><ellipse cx="160" cy="130" rx="130" ry="80" class="greenTop"/>
+    <circle cx="210" cy="110" r="7" class="hole"/><path d="M210 110v-50" class="pole"/><path d="M210 60l18 6-18 6z" class="flagc"/>
+    <circle cx="110" cy="150" r="11" class="pitch"/><path d="M96 176 L106 158 M104 180 L112 160" class="toolprongs"/><rect x="88" y="174" width="26" height="14" rx="4" class="tool"/>
+    ${label(126, 186, "Arregla la marca\nde tu bola", "start", "lbl small")}
+    ${label(20, 34, "En silencio cuando otro juega", "start")}`;
+  return `<rect x="40" y="40" width="240" height="160" rx="12" class="card2"/>
+    ${label(60, 72, "Hoyo 1   ·   Par 3", "start")}
+    <path d="M60 86h200" class="rule"/>
+    ${label(60, 116, "Máximo:  6 golpes  (doble par)", "start")}
+    ${label(60, 150, "Llegaste a 6: levanta la bola", "start", "lbl small")}
+    ${label(60, 170, "y sigue al próximo hoyo.", "start", "lbl small")}
+    <circle cx="246" cy="160" r="16" class="okc"/><path d="M238 160l6 6 11-12" class="okt"/>`;
+}
+
+/* Cara del palo abierta (búnker) */
+function faceSvg(){
+  return `<path d="M0 0h320v240H0z" class="sandTop"/>
+    <g transform="translate(110 120)"><path d="M0 0 C 10 -40, 80 -50, 110 -20 C 120 -8, 110 10, 90 14 L 6 22 Z" class="headTop closed"/></g>
+    <g transform="translate(110 120) rotate(-24 50 0)"><path d="M0 0 C 10 -40, 80 -50, 110 -20 C 120 -8, 110 10, 90 14 L 6 22 Z" class="headTop"/></g>
+    ${arrow(P2(250, 70), P2(220, 104))}${label(166, 52, "Cara abierta:\nmira un poco al cielo", "start", "lbl small")}
+    ${label(30, 210, "Gira la cara antes de tomar el palo", "start", "lbl small")}`;
+}
+
+/* Las 24 escenas: una por paso */
+const SCENES = {
+  "agarre-0": {alt:"Mano izquierda en el palo, se ven dos nudillos", raw:() => gripSvg(0)},
+  "agarre-1": {alt:"Mano derecha debajo, la V apunta al hombro derecho", raw:() => gripSvg(1)},
+  "agarre-2": {alt:"Medidor de presión en 4 de 10", raw:() => gripSvg(2)},
+  "postura-0": {alt:"Golfista de frente con los pies al ancho de los hombros", front:{st:26},
+    notes:g => `<path d="M${g.S1.x} ${g.S1.y} V${GY}" class="guide"/><path d="M${g.S2.x} ${g.S2.y} V${GY}" class="guide"/>${arrow(P2(160, 228), P2(132, 228))}${arrow(P2(160, 228), P2(188, 228))}${label(204, 120, "Pies al ancho\nde los hombros")}${label(204, 176, "Rodillas un\npoco flojas", "start", "lbl small")}`},
+  "postura-1": {alt:"Golfista de perfil inclinado desde la cadera con la espalda recta", side:{spine:34},
+    notes:g => `${ln(P2(g.Hp.x - 10 * Math.sin(rad(34)), g.Hp.y + 10 * Math.cos(rad(34))), P2(g.S.x + 14 * Math.sin(rad(34)), g.S.y - 14 * Math.cos(rad(34))), "guide strong")}${arrow(P2(100, 150), P2(84, 150))}${label(14, 132, "Cola\natrás", "start", "lbl small")}${label(210, 60, "Espalda\nrecta")}<path d="M${g.S.x + 4} ${g.S.y} V${g.Hn.y + 6}" class="guide"/>${label(200, 130, "Brazos\ncuelgan", "start", "lbl small")}`},
+  "postura-2": {alt:"Vista desde arriba: pies paralelos a la línea del objetivo", raw:alignSvg},
+  "putt-0": {alt:"Golfista de perfil con el putter, los ojos encima de la bola", side:{spine:42, club:"putter"},
+    notes:g => `<path d="M${f1(g.head.x + 4)} ${f1(g.head.y + 8)} V${GY - 8}" class="guide strong"/>${label(214, 70, "Ojos sobre\nla bola")}${arrow(P2(212, 86), P2(g.head.x + 10, 112))}`},
+  "putt-1": {alt:"Movimiento de péndulo con los hombros", anim:[{th:-20, club:46}, {th:20, club:46}], ballX:160,
+    figNotes:g => `<path d="M${f1(g.S1.x)} ${f1(g.S1.y)} L${f1(g.H.x)} ${f1(g.H.y)} L${f1(g.S2.x)} ${f1(g.S2.y)} Z" class="tri"/>`,
+    notes:() => `${label(16, 40, "Triángulo firme:\nhombros y brazos", "start", "lbl small")}${label(214, 120, "Muñecas\nquietas", "start", "lbl small")}`},
+  "putt-2": {alt:"Tic hacia atrás y tac hacia la bola, mismo tiempo", anim:[{th:-20, club:46}, {th:20, club:46}], ballX:160,
+    notes:() => `${label(80, 120, "tic", "middle", "big")}${label(240, 120, "tac", "middle", "big")}${arrow(P2(150, 236), P2(112, 236))}${arrow(P2(170, 236), P2(208, 236))}`, staticNotes:true},
+  "chip-0": {alt:"Bola más cerca del pie de atrás y pies más juntos", front:{st:18}, ballX:150,
+    notes:() => `${arrow(P2(108, 190), P2(144, 206))}${label(20, 182, "Bola más\natrás", "start", "lbl small")}${label(206, 150, "Pies más\njuntos", "start", "lbl small")}${targetTag}`},
+  "chip-1": {alt:"Más peso en el pie de adelante", front:{st:18, shift:7}, ballX:150,
+    notes:() => `${arrow(P2(178, 104), P2(178, 196), "mark")}${label(196, 120, "Más peso\naquí", "start")}${targetTag}`},
+  "chip-2": {alt:"Golpe corto: la bola vuela poco y luego rueda", anim:[{th:-38, st:18, shift:7}, {th:38, st:18, shift:7}], ballX:150,
+    notes:() => `<path d="M156 ${GY - 6} Q 200 160 236 ${GY - 4}" class="traj"/><path d="M236 ${GY - 4} H286" class="traj roll"/>${flag(296)}${label(214, 172, "vuela poco", "start", "lbl small")}${label(262, 233, "rueda", "middle", "lbl small")}`, staticNotes:true},
+  "medio-0": {alt:"Medio swing de las 9 a las 3, como un reloj", anim:[{th:-88, hinge:-6}, {th:88, hinge:6}], ballX:160,
+    notes:g => `<circle cx="160" cy="90" r="128" class="clock"/>${label(18, 96, "9", "middle", "big")}${label(302, 96, "3", "middle", "big")}`, staticNotes:true},
+  "medio-1": {alt:"El pecho gira suave y los brazos acompañan", anim:[{th:-80, hinge:-10, turn:.8}, {th:80, hinge:10, turn:.8, shift:6}], ballX:160,
+    notes:() => `<path d="M118 70 A 46 18 0 0 0 202 70" class="mark arrowline"/>${arrow(P2(196, 76), P2(204, 68))}${label(160, 34, "Gira el pecho, suave", "middle")}`, staticNotes:true},
+  "medio-2": {alt:"Final: el pecho mira al objetivo", front:{th:100, hinge:40, turn:.9, shift:10, heelR:.6}, ballX:160,
+    notes:() => `${arrow(P2(186, 120), P2(240, 120))}${label(196, 150, "Pecho y cinturón\nmiran al objetivo", "start", "lbl small")}${targetTag}`},
+  "completo-0": {alt:"Swing de tres cuartos: las manos llegan a la altura del hombro", front:{th:-96, hinge:-84, turn:1, heelF:.2}, ghost:{}, ballX:160,
+    notes:g => `<path d="M10 ${f1(g.H.y)} H310" class="guide strong"/>${label(316, f1(g.H.y) - 8, "Altura del hombro", "end", "lbl small")}${label(220, 190, "No hace falta\nsubir más", "start", "lbl small")}`},
+  "completo-1": {alt:"El talón izquierdo se levanta un poco al subir", front:{th:-96, hinge:-84, turn:1, heelF:1}, ballX:160,
+    notes:g => `${arrow(P2(238, 196), P2(g.F2.x + 8, GY - 8))}${label(214, 176, "Talón izquierdo\nsube un poco", "start", "lbl small")}${label(16, 230, "Así la espalda no se fuerza", "start", "lbl small")}`},
+  "completo-2": {alt:"Final en equilibrio, quieto tres segundos", front:{th:118, hinge:74, turn:1, shift:14, heelR:1}, ballX:160,
+    notes:() => `<circle cx="262" cy="70" r="26" class="okc"/>${label(262, 77, "3 s", "middle", "big")}${label(214, 120, "Quieto y en\nequilibrio", "start")}`},
+  "bunker-0": {alt:"Pies firmes en la arena, el palo no toca la arena", front:{st:28}, ground:"sand", ballX:160, raise:6,
+    notes:() => `<path d="M118 ${GY + 3} q5 -5 10 0 t10 0 M184 ${GY + 3} q5 -5 10 0 t10 0" class="mark arrowline"/>${label(16, 176, "Pies firmes:\nmuévelos en\nla arena", "start", "lbl small")}${label(206, 168, "No toques\nla arena antes", "start", "lbl small")}`},
+  "bunker-1": {alt:"Cara del palo abierta, mirando un poco al cielo", raw:faceSvg},
+  "bunker-2": {alt:"Golpea la arena unos 5 centímetros antes de la bola", anim:[{th:-80, hinge:-50}, {th:90, hinge:40, turn:.8, shift:8}], ground:"sand", ballX:166,
+    notes:() => `<path d="M154 ${GY - 22} V${GY + 6}" class="mark arrowline dash"/>${label(150, GY + 22, "5 cm antes", "end", "lbl small")}<g class="splash"><circle cx="186" cy="196" r="3"/><circle cx="198" cy="186" r="2.5"/><circle cx="176" cy="188" r="2"/><circle cx="208" cy="198" r="2"/></g>${label(214, 160, "La arena saca\nla bola", "start", "lbl small")}`, staticNotes:true},
+  "recorrido-0": {alt:"Mapa de nueve hoyos cortos", raw:() => courseSvg(0)},
+  "recorrido-1": {alt:"Green con bandera y marca de bola reparada", raw:() => courseSvg(1)},
+  "recorrido-2": {alt:"Tarjeta: máximo el doble del par", raw:() => courseSvg(2)}
+};
+
+function sceneSvg(key, poseOverride){
+  const sc = SCENES[key]; if (!sc) return "";
+  let body = "";
+  if (sc.raw) body = sc.raw();
+  else if (sc.side) { const g = sideFig(sc.side); body = ground() + ball(g.B.x + 6) + g.svg + (sc.notes ? sc.notes(g) : ""); }
+  else {
+    const pose = poseOverride || sc.front || sc.anim[0];
+    const g = frontPose(pose);
+    const bx = sc.ballX || 160;
+    body = ground(sc.ground);
+    if (sc.anim && !poseOverride) body += drawFront(frontPose(sc.anim[1]), "ghost");
+    if (sc.ghost) body += drawFront(frontPose(sc.ghost), "ghost");
+    body += ball(bx) + `<g class="figwrap">${drawFront(g)}${sc.figNotes ? sc.figNotes(g) : ""}</g>` + (sc.notes ? sc.notes(g) : "");
+  }
+  return `<svg viewBox="0 0 320 240" role="img" aria-label="${esc(sc.alt)}" class="illo-svg">${body}</svg>`;
+}
+
+/* Animación suave de ida y vuelta (ritmo lento, como debe ser el swing) */
+let animRAF = 0;
+function stopAnim(){ cancelAnimationFrame(animRAF); animRAF = 0; }
+function startAnim(el, key){
+  stopAnim();
+  const sc = SCENES[key]; if (!sc || !sc.anim) return;
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const [A, B] = sc.anim, wrap = el.querySelector(".figwrap"); if (!wrap) return;
+  const ghost = el.querySelector(".ghost"); if (ghost) ghost.remove();
+  const period = 2600, t0 = performance.now();
+  const mix = (k) => { const o = {}; for (const n of new Set([...Object.keys(A), ...Object.keys(B)])) { const a = A[n] ?? 0, b = B[n] ?? 0; o[n] = a + (b - a) * k; } return o; };
+  const tick = (now) => {
+    if (!document.body.contains(wrap)) return stopAnim();
+    const ph = ((now - t0) % period) / period;              // 0..1
+    const k = .5 - .5 * Math.cos(ph * 2 * Math.PI);          // ida y vuelta, suave
+    const g = frontPose(mix(k)); wrap.innerHTML = drawFront(g) + (sc.figNotes ? sc.figNotes(g) : "");
+    animRAF = requestAnimationFrame(tick);
+  };
+  animRAF = requestAnimationFrame(tick);
+}
+function illoHtml(key){
+  const sc = SCENES[key]; if (!sc) return "";
+  return `<figure class="illo" data-scene="${key}">${sceneSvg(key)}${sc.anim ? `<button type="button" class="btn btn-ghost btn-small illo-play" aria-pressed="true">Pausar</button>` : ""}</figure>`;
+}
+function wireIllo(root){
+  const fig = root.querySelector(".illo"); if (!fig) return;
+  const key = fig.dataset.scene; startAnim(fig, key);
+  const b = fig.querySelector(".illo-play"); if (!b) return;
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { b.textContent = "Ver movimiento"; b.setAttribute("aria-pressed", "false"); }
+  b.onclick = () => {
+    if (animRAF) { stopAnim(); b.textContent = "Ver movimiento"; b.setAttribute("aria-pressed", "false"); }
+    else { fig.querySelector("svg").outerHTML = sceneSvg(key); runAnyway(fig, key); b.textContent = "Pausar"; b.setAttribute("aria-pressed", "true"); }
+  };
+}
+function runAnyway(fig, key){
+  const sc = SCENES[key]; const [A, B] = sc.anim; const wrap = fig.querySelector(".figwrap");
+  const ghost = fig.querySelector(".ghost"); if (ghost) ghost.remove();
+  const period = 2600, t0 = performance.now();
+  const mix = (k) => { const o = {}; for (const n of new Set([...Object.keys(A), ...Object.keys(B)])) { const a = A[n] ?? 0, b = B[n] ?? 0; o[n] = a + (b - a) * k; } return o; };
+  const tick = (now) => { if (!document.body.contains(wrap)) return stopAnim(); const k = .5 - .5 * Math.cos(((now - t0) % period) / period * 2 * Math.PI); const g = frontPose(mix(k)); wrap.innerHTML = drawFront(g) + (sc.figNotes ? sc.figNotes(g) : ""); animRAF = requestAnimationFrame(tick); };
+  stopAnim(); animRAF = requestAnimationFrame(tick);
+}
+
+window.__golfScenes = {SCENES, sceneSvg}; // para revisar los dibujos
 /* ---------------- Vistas ---------------- */
 let view = "inicio";
-function go(v){ view=v; if (synth) synth.cancel(); render(); window.scrollTo({top:0}); }
+function go(v){ stopAnim(); view=v; if (synth) synth.cancel(); render(); window.scrollTo({top:0}); }
 document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
 
 function render(){
@@ -519,6 +808,7 @@ function vLeccion(){
       <div class="steps-nav" aria-hidden="true">${[...Array(n+1)].map((_,k)=>`<span class="${k<=S.step?"on":""}"></span>`).join("")}</div>
       ${S.warmupDate!==today()?`<div class="tip">¿Ya calentaste hoy? <button type="button" class="btn btn-ghost btn-small" id="warm" style="margin-left:6px">Calentar 5 min</button></div>`:""}
       <div class="card stack">
+        ${illoHtml(L.id+"-"+S.step)}
         <h2>${esc(st.t)}</h2>
         <p class="step-big">${linkTerms(st.d, allTerms)}</p>
         <div id="gloss"></div>
@@ -531,6 +821,7 @@ function vLeccion(){
         <button class="btn btn-ghost" type="button" id="ask">Preguntar al profesor</button>
       </div>
     </section>`;
+    wireIllo(app);
     if (S.autoRead) speak(st.t+". "+st.d);
     app.querySelectorAll("[data-term]").forEach(b => b.onclick = () => { $("#gloss").innerHTML = `<div class="gloss"><b>${esc(b.dataset.term[0].toUpperCase()+b.dataset.term.slice(1))}:</b> ${esc(TERMS[b.dataset.term])}</div>`; });
     const p=$("#prev"); if(p) p.onclick=()=>{S.step--;save();render();};
