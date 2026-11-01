@@ -286,6 +286,7 @@ const LESSONS = [
   tip:"Usa carrito si el campo es largo. Cuidar la energía también es jugar bien."}
 ];
 
+const PRIVACY = "Para responderte, tus preguntas y fotos se envían a un servicio de inteligencia artificial: Google Gemini, Anthropic (Claude) u OpenAI, según cómo esté configurada la app. Si se usa el plan gratis de Gemini, Google puede usar lo que envías para mejorar sus productos. Te recomendamos no enviar fotos donde se vea tu cara ni datos personales. Tu avance y tus conversaciones se guardan solo en este dispositivo.";
 const SAFETY_RE = /(dolor (en el |del |de )?pecho|pecho me duele|me duele el pecho|mare[oa]|me mareo|falta de aire|me falta el aire|no puedo respirar|me ahogo|dolor agudo|dolor fuerte|dolor punzante|palpitaciones)/i;
 const SAFETY_MSG = "Para ahora mismo y descansa.\nLo que describes necesita atención. Consulta a un médico antes de seguir practicando.\nSi el dolor es fuerte o no pasa, llama a emergencias.";
 
@@ -867,6 +868,7 @@ function vProfesor(){
   if (!S.chat.length) S.chat.push({role:"assistant", content:`Hola${S.name?" "+S.name:""}. Soy tu profesor. Vamos por la lección ${S.current+1}: ${LESSONS[S.current].title.toLowerCase()}.\nPuedes preguntarme lo que quieras, o mandarme una foto de tu postura o tu agarre.\n¿Empezamos?`});
   app.innerHTML = `<section class="view stack">
     <div class="row" style="justify-content:space-between"><h2>Tu profesor</h2><span class="status">${esc(modeLabel)} · <button type="button" class="term" id="toSet">cambiar</button></span></div>
+    ${!S.privacyOk && S.ai!=="off" ? `<div class="tip stack" id="priv" style="gap:10px"><b>Antes de empezar: tu privacidad</b><p>${esc(PRIVACY)}</p><div><button type="button" class="btn btn-green btn-small" id="privOk">Entendido</button></div></div>` : ""}
     <div class="chips" aria-label="Preguntas rápidas">
       <button type="button" class="chip" data-q="Explícame la lección de hoy, paso a paso.">La lección de hoy</button>
       <button type="button" class="chip" data-q="¿Qué palo uso?">¿Qué palo uso?</button>
@@ -891,10 +893,11 @@ function vProfesor(){
   drawMsgs();
   if (pendingQuestion){ q.value=pendingQuestion; pendingQuestion=""; q.focus(); }
   $("#toSet").onclick=()=>go("ajustes");
+  const po=$("#privOk"); if (po) po.onclick=()=>{ S.privacyOk=true; save(); $("#priv").remove(); };
   $("#clear").onclick=()=>{ S.chat=[]; save(); render(); };
   $("#mic").onclick=e=>dictate(q, e.currentTarget);
   $("#ph").onchange=e=>{ const f=e.target.files[0]; if(!f) return; photo=f; const url=URL.createObjectURL(f);
-    $("#photoPrev").innerHTML=`<div class="row"><img src="${url}" alt="Foto elegida" style="max-height:90px;border-radius:10px"><span class="muted">Foto lista. Dime qué es: agarre, postura o swing.</span><button type="button" class="btn btn-ghost btn-small" id="rmPh">Quitar</button></div>`;
+    $("#photoPrev").innerHTML=`<div class="row"><img src="${url}" alt="Foto elegida" style="max-height:90px;border-radius:10px"><span class="muted">Foto lista. Dime qué es: agarre, postura o swing. Se enviará al servicio de IA.</span><button type="button" class="btn btn-ghost btn-small" id="rmPh">Quitar</button></div>`;
     if(!q.value) q.value="Mira mi foto. ¿Qué hago bien y qué corrijo?";
     $("#rmPh").onclick=()=>{photo=null;$("#photoPrev").innerHTML="";$("#ph").value="";}; };
   app.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{ q.value=b.dataset.q; send(); });
@@ -998,6 +1001,11 @@ function vAjustes(){
       ${voices.length?`<label class="f">Voz<select id="voice">${voices.map(v=>`<option value="${esc(v.name)}" ${cur&&v.name===cur.name?"selected":""}>${esc(voiceRegion(v.lang))} · ${esc(v.name)}</option>`).join("")}</select></label>`:`<p class="status">${synth?"Las voces en español se cargan al abrir esta página por primera vez.":"Este navegador no puede leer en voz alta."}</p>`}
       <div><button type="button" class="btn btn-ghost btn-small" data-say="Hola. Soy tu profesor de golf. Vamos con calma.">${ICON.speak}Probar voz</button></div>
       <p class="status">Dictado por voz: ${SR?"disponible en este navegador.":"no disponible aquí. Usa el micrófono del teclado de tu teléfono."}</p>
+    </div>
+    <div class="card stack">
+      <h3>Privacidad</h3>
+      <p class="muted">${esc(PRIVACY)}</p>
+      <p class="muted">Si eliges "Sin IA", la app no envía nada a internet.</p>
     </div>
     <div class="card stack">
       <h3>Mis datos</h3>
