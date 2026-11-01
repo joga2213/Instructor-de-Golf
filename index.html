@@ -257,6 +257,7 @@ const defaults = {name:"", limits:"", hand:"derecha", current:0, step:0, done:[]
   ai:"claude", keys:{}, models:{}, voiceOn:true, autoRead:false, rate:0.9, voiceName:"", size:"md", chat:[]};
 let S = {...defaults};
 try { const raw = localStorage.getItem(KEY); if (raw) S = {...defaults, ...JSON.parse(raw)}; } catch(e) {}
+if (!S.voiceV2) { S.voiceName=""; S.voiceV2=true; } // usar voz latinoamericana por defecto
 if (S.ai==="apikey") { S.ai="anthropic"; S.keys={...S.keys, anthropic:S.apiKey||""}; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
 
@@ -281,12 +282,16 @@ const ICON = {
 /* ---------------- Voz ---------------- */
 const synth = window.speechSynthesis || null;
 function esVoices(){ return synth ? synth.getVoices().filter(v => /^es/i.test(v.lang)) : []; }
+const LATAM = /^es[-_](MX|US|419|AR|CO|CL|PE|VE|UY|EC|BO|PY|CR|DO|GT|HN|NI|PA|PR|SV|CU)/i;
+function sortedVoices(){ return esVoices().sort((a,b) => (LATAM.test(b.lang)?1:0) - (LATAM.test(a.lang)?1:0)); }
+function pickVoice(){ const vs = sortedVoices(); return vs.find(v => v.name===S.voiceName) || vs[0] || null; }
+function voiceRegion(lang){ const m={MX:"México",US:"Latinoamérica (EE. UU.)","419":"Latinoamérica",AR:"Argentina",CO:"Colombia",CL:"Chile",PE:"Perú",VE:"Venezuela",UY:"Uruguay",EC:"Ecuador",ES:"España"}; const k=(lang.split(/[-_]/)[1]||"").toUpperCase(); return m[k]||lang; }
 function speak(text){
   if (!synth || !S.voiceOn) { if(!synth) toast("Tu navegador no puede leer en voz alta."); return; }
   synth.cancel();
   const u = new SpeechSynthesisUtterance(text.replace(/[*#_]/g,""));
-  u.lang = "es-ES"; u.rate = S.rate;
-  const v = esVoices().find(v => v.name===S.voiceName) || esVoices()[0];
+  u.lang = "es-MX"; u.rate = S.rate;
+  const v = pickVoice();
   if (v) { u.voice = v; u.lang = v.lang; }
   synth.speak(u);
 }
@@ -299,7 +304,7 @@ function dictate(target, btn){
   if (!SR) { toast("El dictado no está disponible aquí. Prueba Chrome en tu computadora o usa el micrófono del teclado."); return; }
   if (rec) { rec.stop(); return; }
   try {
-    rec = new SR(); rec.lang = "es-ES"; rec.interimResults = true; rec.continuous = false;
+    rec = new SR(); rec.lang = "es-MX"; rec.interimResults = true; rec.continuous = false;
     const base = target.value ? target.value.trim()+" " : "";
     rec.onresult = ev => { let t=""; for (const r of ev.results) t += r[0].transcript; target.value = base + t; };
     rec.onerror = ev => { toast(ev.error==="not-allowed" ? "No hay permiso para usar el micrófono aquí. Usa el micrófono del teclado." : "No pude escuchar. Intenta de nuevo."); };
@@ -396,7 +401,7 @@ async function askServer(history, image, onText, signal){
   catch(e) { if (e && e.name==="AbortError") throw {code:"cancelled"}; throw {code:"nosample"}; }
   if (r.status===404 || r.status===405) throw {code:"nosample"};
   if (r.status===429) throw {code:"rate_limited"};
-  if (!r.ok) throw {code:"server"};
+  if (!r.ok) { let m=""; try{ m=(await r.json()).error||""; }catch(e){} throw {code: r.status===503?"nokeyserver":"server", message:m}; }
   const j = await r.json(); const text = j.text || "";
   onText && onText(text); return text;
 }
@@ -411,7 +416,8 @@ function aiErrorCopy(e){
     case "not_granted": return "No se dio permiso para usar Claude. Puedes seguir con las lecciones sin IA.";
     case "rate_limited": return "Muchas preguntas seguidas. Espera un minuto y vuelve a intentar.";
     case "images_unavailable": return "Aquí no puedo ver fotos. Descríbeme lo que ves y te ayudo.";
-    case "server": return "El servidor del profesor tuvo un problema. Intenta de nuevo en un momento.";
+    case "server": return "El servidor del profesor tuvo un problema"+(e.message?": "+e.message:"")+". Intenta de nuevo en un momento.";
+    case "nokeyserver": return "Falta la clave de la IA en el servidor. En Vercel, agrega GEMINI_API_KEY en Settings, Environment Variables, y luego haz Redeploy.";
     case "cancelled": return "";
     default: return "No pude responder ahora. Intenta de nuevo en un momento.";
   }
@@ -681,7 +687,7 @@ function vPalo(){
 
 /* ---------------- Ajustes ---------------- */
 function vAjustes(){
-  const voices = esVoices();
+  const voices = sortedVoices(); const cur = pickVoice();
   app.innerHTML = `<section class="view stack">
     <h2>Ajustes</h2>
     <div class="card stack">
@@ -698,7 +704,7 @@ function vAjustes(){
       <label class="opt"><input type="checkbox" id="voiceOn" ${S.voiceOn?"checked":""}><span><b>Botones de "Escuchar"</b><br><span class="muted">Lee en voz alta los pasos y respuestas.</span></span></label>
       <label class="opt"><input type="checkbox" id="autoRead" ${S.autoRead?"checked":""}><span><b>Leer todo automáticamente</b><br><span class="muted">Cada paso y cada respuesta se lee sola.</span></span></label>
       <label class="f">Velocidad de lectura<input id="rate" type="range" min="0.6" max="1.2" step="0.05" value="${S.rate}"></label>
-      ${voices.length?`<label class="f">Voz<select id="voice">${voices.map(v=>`<option ${v.name===S.voiceName?"selected":""}>${esc(v.name)}</option>`).join("")}</select></label>`:`<p class="status">${synth?"Las voces en español se cargan al abrir esta página por primera vez.":"Este navegador no puede leer en voz alta."}</p>`}
+      ${voices.length?`<label class="f">Voz<select id="voice">${voices.map(v=>`<option value="${esc(v.name)}" ${cur&&v.name===cur.name?"selected":""}>${esc(voiceRegion(v.lang))} · ${esc(v.name)}</option>`).join("")}</select></label>`:`<p class="status">${synth?"Las voces en español se cargan al abrir esta página por primera vez.":"Este navegador no puede leer en voz alta."}</p>`}
       <div><button type="button" class="btn btn-ghost btn-small" data-say="Hola. Soy tu profesor de golf. Vamos con calma.">${ICON.speak}Probar voz</button></div>
       <p class="status">Dictado por voz: ${SR?"disponible en este navegador.":"no disponible aquí. Usa el micrófono del teclado de tu teléfono."}</p>
     </div>
@@ -735,11 +741,12 @@ function vAjustes(){
     save(); toast("Ajustes guardados.");
   };
   $("#rate").oninput=e=>{ S.rate=+e.target.value; };
+  const vsel=$("#voice"); if (vsel) vsel.onchange=()=>{ S.voiceName=vsel.value; save(); speak("Hola. Así sueno. Vamos con calma."); };
   $("#reset").onclick=()=>{ $("#resetRow").innerHTML=`<span>¿Seguro? Esto no se puede deshacer.</span><button type="button" class="btn btn-ghost btn-small" id="no">No, volver</button><button type="button" class="btn btn-small" style="background:var(--alert);color:#fff" id="yes">Sí, borrar</button>`;
     $("#no").onclick=()=>render(); $("#yes").onclick=()=>{ const keep={ai:S.ai,keys:S.keys,models:S.models,size:S.size}; S={...defaults,...keep}; save(); toast("Avance borrado."); go("inicio"); }; };
 }
 
-if (synth && synth.onvoiceschanged!==undefined) synth.onvoiceschanged = () => { if (view==="ajustes") {} };
+if (synth && synth.onvoiceschanged!==undefined) synth.onvoiceschanged = () => { if (view==="ajustes" && !document.getElementById("voice")) render(); };
 render();
 })();
 </script>
